@@ -125,7 +125,33 @@ class _AirplaneListPageState extends State<AirplaneListPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Airplane List")),
+      appBar: AppBar(
+        title: const Text("Airplane List"),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.help_outline),
+            onPressed: () {
+              showDialog(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: const Text("How to use"),
+                    content: const Text(
+                      "Fill in the details in the text fields.\n"
+                      "Tap 'Add Airplane' to insert a new record.\n"
+                      "Long press an item to delete it.\n"
+                      "You will be prompted to reuse the last input when you reopen the page."
+                    ),
+                    actions: [
+                      TextButton(
+                        child: const Text("OK"),
+                        onPressed: () => Navigator.of(context).pop(),
+                      )
+                    ],
+                  ),
+              );
+            }, )
+        ],
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(children: [
