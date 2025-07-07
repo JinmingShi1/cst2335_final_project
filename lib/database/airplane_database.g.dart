@@ -125,6 +125,17 @@ class _$AirplaneDao extends AirplaneDao {
                   'maxSpeed': item.maxSpeed,
                   'range': item.range
                 }),
+        _airplaneUpdateAdapter = UpdateAdapter(
+            database,
+            'airplanes',
+            ['id'],
+            (Airplane item) => <String, Object?>{
+                  'id': item.id,
+                  'type': item.type,
+                  'passengerCapacity': item.passengerCapacity,
+                  'maxSpeed': item.maxSpeed,
+                  'range': item.range
+                }),
         _airplaneDeletionAdapter = DeletionAdapter(
             database,
             'airplanes',
@@ -145,6 +156,8 @@ class _$AirplaneDao extends AirplaneDao {
 
   final InsertionAdapter<Airplane> _airplaneInsertionAdapter;
 
+  final UpdateAdapter<Airplane> _airplaneUpdateAdapter;
+
   final DeletionAdapter<Airplane> _airplaneDeletionAdapter;
 
   @override
@@ -162,6 +175,11 @@ class _$AirplaneDao extends AirplaneDao {
   Future<int> insertAirplane(Airplane airplane) {
     return _airplaneInsertionAdapter.insertAndReturnId(
         airplane, OnConflictStrategy.abort);
+  }
+
+  @override
+  Future<void> updateAirplane(Airplane airplane) async {
+    await _airplaneUpdateAdapter.update(airplane, OnConflictStrategy.abort);
   }
 
   @override

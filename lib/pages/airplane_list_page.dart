@@ -21,11 +21,27 @@ class _AirplaneListPageState extends State<AirplaneListPage> {
   final _rangeController = TextEditingController();
 
   final _secureStorage = const FlutterSecureStorage();
+  Airplane? _selectedAirplane;
 
   @override
   void initState() {
     super.initState();
     _initDB();
+
+    // add listeners to all the fields
+    _typeController.addListener(_saveInput);
+    _capacityController.addListener(_saveInput);
+    _speedController.addListener(_saveInput);
+    _rangeController.addListener(_saveInput);
+  }
+
+  @override
+  void dispose() {
+    _typeController.dispose();
+    _capacityController.dispose();
+    _speedController.dispose();
+    _rangeController.dispose();
+    super.dispose();
   }
 
   Future<void> _initDB() async {
@@ -49,6 +65,8 @@ class _AirplaneListPageState extends State<AirplaneListPage> {
       _capacityController.text = await _secureStorage.read(key: 'last_capacity') ?? '';
       _speedController.text = await _secureStorage.read(key: 'last_speed') ?? '';
       _rangeController.text = await _secureStorage.read(key: 'last_range') ?? '';
+    } else {
+      _clearInput();
     }
 
     _loadAirplanes();
@@ -62,15 +80,7 @@ class _AirplaneListPageState extends State<AirplaneListPage> {
   }
 
   Future<void> _addAirplane() async {
-    if (_typeController.text.isEmpty ||
-        _capacityController.text.isEmpty ||
-        _speedController.text.isEmpty ||
-        _rangeController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("All fields must be filled")),
-      );
-      return;
-    }
+    if (_formNotValid()) return;
 
     final airplane = Airplane(
       type: _typeController.text,
@@ -82,44 +92,99 @@ class _AirplaneListPageState extends State<AirplaneListPage> {
     final insertedId = await dao.insertAirplane(airplane);
     airplane.id = insertedId;
 
-    await _secureStorage.write(key: 'last_type', value: _typeController.text);
-    await _secureStorage.write(key: 'last_capacity', value: _capacityController.text);
-    await _secureStorage.write(key: 'last_speed', value: _speedController.text);
-    await _secureStorage.write(key: 'last_range', value: _rangeController.text);
+    await _saveInput();
 
     setState(() {
       airplanes.add(airplane);
-      _typeController.clear();
-      _capacityController.clear();
-      _speedController.clear();
-      _rangeController.clear();
+      _clearForm();
     });
 
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Airplane added")));
+    _showSnackBar("Airplane added");
   }
 
-  void _deleteAirplane(int index) {
-    final airplane = airplanes[index];
+  Future<void> _updateAirplane() async {
+    if (_formNotValid() || _selectedAirplane == null) return;
+
+    final updated = Airplane(
+      id: _selectedAirplane!.id,
+      type: _typeController.text,
+      passengerCapacity: int.parse(_capacityController.text),
+      maxSpeed: int.parse(_speedController.text),
+      range: int.parse(_rangeController.text),
+    );
+
+    await dao.updateAirplane(updated);
+
+    await _saveInput();
+
+    setState(() {
+      final index = airplanes.indexWhere((a) => a.id == updated.id);
+      if (index != -1) airplanes[index] = updated;
+      _clearForm();
+    });
+
+    _showSnackBar("Airplane updated");
+  }
+
+  void _confirmDeleteAirplane() {
+    if (_selectedAirplane == null) return;
+
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
         title: const Text("Delete?"),
-        content: Text("Delete airplane: ${airplane.type}?"),
+        content: Text("Delete airplane: ${_selectedAirplane!.type}?"),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancel")),
           TextButton(
             onPressed: () async {
               Navigator.pop(context);
-              await dao.deleteAirplane(airplane);
+              await dao.deleteAirplane(_selectedAirplane!);
               setState(() {
-                airplanes.removeAt(index);
+                airplanes.removeWhere((a) => a.id == _selectedAirplane!.id);
+                _clearForm();
               });
+              _showSnackBar("Airplane deleted");
             },
-            child: const Text("Delete"),
+            child: const Text("Delete", style: TextStyle(color: Colors.red)),
           )
         ],
       ),
     );
+  }
+
+  bool _formNotValid() {
+    if (_typeController.text.isEmpty ||
+        _capacityController.text.isEmpty ||
+        _speedController.text.isEmpty ||
+        _rangeController.text.isEmpty) {
+      _showSnackBar("All fields must be filled");
+      return true;
+    }
+    return false;
+  }
+
+  void _clearForm() {
+    _typeController.clear();
+    _capacityController.clear();
+    _speedController.clear();
+    _rangeController.clear();
+    _selectedAirplane = null;
+  }
+
+  Future<void> _saveInput() async {
+    await _secureStorage.write(key: 'last_type', value: _typeController.text);
+    await _secureStorage.write(key: 'last_capacity', value: _capacityController.text);
+    await _secureStorage.write(key: 'last_speed', value: _speedController.text);
+    await _secureStorage.write(key: 'last_range', value: _rangeController.text);
+  }
+
+  Future<void> _clearInput() async {
+    await _secureStorage.deleteAll();
+  }
+
+  void _showSnackBar(String msg) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
   }
 
   @override
@@ -132,24 +197,26 @@ class _AirplaneListPageState extends State<AirplaneListPage> {
             icon: const Icon(Icons.help_outline),
             onPressed: () {
               showDialog(
-                  context: context,
-                  builder: (context) => AlertDialog(
-                    title: const Text("How to use"),
-                    content: const Text(
-                      "Fill in the details in the text fields.\n"
-                      "Tap 'Add Airplane' to insert a new record.\n"
-                      "Long press an item to delete it.\n"
-                      "You will be prompted to reuse the last input when you reopen the page."
-                    ),
-                    actions: [
-                      TextButton(
-                        child: const Text("OK"),
-                        onPressed: () => Navigator.of(context).pop(),
-                      )
-                    ],
+                context: context,
+                builder: (_) => AlertDialog(
+                  title: const Text("How to use"),
+                  content: const Text(
+                    "Fill in the airplane details below.\n"
+                        "- Tap 'Add Airplane' to create a new entry.\n"
+                        "- Tap a list item to edit it.\n"
+                        "- Press 'Update' to save changes, or 'Delete' to remove it.\n"
+                        "- Data is stored securely and remembered next time you open the app.",
                   ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text("OK"),
+                    ),
+                  ],
+                ),
               );
-            }, )
+            },
+          )
         ],
       ),
       body: Padding(
@@ -166,7 +233,21 @@ class _AirplaneListPageState extends State<AirplaneListPage> {
             Expanded(child: TextField(controller: _rangeController, decoration: const InputDecoration(labelText: 'Range'))),
           ]),
           const SizedBox(height: 16),
-          ElevatedButton(onPressed: _addAirplane, child: const Text("Add Airplane")),
+          _selectedAirplane == null
+              ? ElevatedButton(onPressed: _addAirplane, child: const Text("Add Airplane"))
+              : Row(
+            children: [
+              Expanded(child: ElevatedButton(onPressed: _updateAirplane, child: const Text("Update"))),
+              const SizedBox(width: 8),
+              Expanded(
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                  onPressed: _confirmDeleteAirplane,
+                  child: const Text("Delete"),
+                ),
+              ),
+            ],
+          ),
           const Divider(),
           Expanded(
             child: ListView.builder(
@@ -176,7 +257,15 @@ class _AirplaneListPageState extends State<AirplaneListPage> {
                 return ListTile(
                   title: Text(airplane.type),
                   subtitle: Text("Capacity: ${airplane.passengerCapacity}, Speed: ${airplane.maxSpeed}, Range: ${airplane.range}"),
-                  onLongPress: () => _deleteAirplane(index),
+                  onTap: () {
+                    setState(() {
+                      _selectedAirplane = airplane;
+                      _typeController.text = airplane.type;
+                      _capacityController.text = airplane.passengerCapacity.toString();
+                      _speedController.text = airplane.maxSpeed.toString();
+                      _rangeController.text = airplane.range.toString();
+                    });
+                  },
                 );
               },
             ),
