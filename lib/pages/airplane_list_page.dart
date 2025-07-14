@@ -3,6 +3,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../dao/airplane_dao.dart';
 import '../database/airplane_database.dart';
 import '../Entities/airplane_entity.dart';
+import '../localization/AppLocalizations.dart';
 
 class AirplaneListPage extends StatefulWidget {
   const AirplaneListPage({super.key});
@@ -189,9 +190,11 @@ class _AirplaneListPageState extends State<AirplaneListPage> {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context)!;
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Airplane List"),
+        title: Text(t.translate("airplaneListTitle") ?? ''),
         actions: [
           IconButton(
             icon: const Icon(Icons.help_outline),
@@ -200,13 +203,7 @@ class _AirplaneListPageState extends State<AirplaneListPage> {
                 context: context,
                 builder: (_) => AlertDialog(
                   title: const Text("How to use"),
-                  content: const Text(
-                    "Fill in the airplane details below.\n"
-                        "- Tap 'Add Airplane' to create a new entry.\n"
-                        "- Tap a list item to edit it.\n"
-                        "- Press 'Update' to save changes, or 'Delete' to remove it.\n"
-                        "- Data is stored securely and remembered next time you open the app.",
-                  ),
+                  content: Text(t.translate('howToUseContent') ?? ''),
                   actions: [
                     TextButton(
                       onPressed: () => Navigator.pop(context),
