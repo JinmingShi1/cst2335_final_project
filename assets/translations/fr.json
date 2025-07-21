@@ -1,0 +1,10 @@
+{
+  "title": "Liste des avions",
+  "addAirplane": "Ajouter un avion",
+  "update": "Mettre à jour",
+  "delete": "Supprimer",
+  "helpText": "Ajouter/gérer les détails",
+  "airplaneListTitle": "Liste des avions",
+  "howToUse": "Comment utiliser",
+  "airplaneListHowToUseContent": " - Veuillez remplir les détails de l'avion ci-dessous.\n - Cliquez sur 'Ajouter un avion' pour créer une nouvelle entrée.\n - Cliquez sur un élément de la liste pour le modifier.\n - Appuyez sur 'Mettre à jour' pour enregistrer les modifications, ou sur 'Supprimer' pour le retirer.\n  - Les données sont stockées en toute sécurité et seront mémorisées lors de la prochaine ouverture de l'application."
+}

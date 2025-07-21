@@ -38,7 +38,7 @@ class _MyAppState extends State<MyApp> {
       debugShowCheckedModeBanner: false,
       supportedLocales: const [
         Locale('en', 'US'),
-        Locale('zh', 'CN'),
+        Locale('fr', 'FR'),
       ],
       localizationsDelegates: const [
         AppLocalizations.delegate,
@@ -77,13 +77,13 @@ class MyHomePage extends StatelessWidget {
               if (lang == 'en') {
                 newLocale = const Locale('en');
               } else {
-                newLocale = const Locale('zh', 'cn');
+                newLocale = const Locale('fr'); // Changed to French
               }
               MyApp.setLocale(context, newLocale);
             },
             itemBuilder: (context) => const [
               PopupMenuItem(value: 'en', child: Text("English (US)")),
-              PopupMenuItem(value: 'zh', child: Text("中文 (简体)")),
+              PopupMenuItem(value: 'fr', child: Text("Français (French)")), // Changed to French
             ],
           )
         ],
