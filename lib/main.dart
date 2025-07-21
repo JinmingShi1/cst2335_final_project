@@ -98,7 +98,7 @@ class MyHomePage extends StatelessWidget {
               onPressed: () {
                 Navigator.pushNamed(context, '/airplanes');
               },
-              child: Text(t.translate("addAirplane") ?? ''),
+              child: Text(t.translate("airplaneListTitle") ?? ''),
             ),
           ],
         ),

@@ -14,6 +14,7 @@ class AirplaneListPage extends StatefulWidget {
 }
 
 class _AirplaneListPageState extends State<AirplaneListPage> {
+  late AppLocalizations t;
   late AirplaneDao dao;
   List<Airplane> airplanes = [];
 
@@ -59,6 +60,12 @@ class _AirplaneListPageState extends State<AirplaneListPage> {
     super.dispose();
   }
 
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    t = AppLocalizations.of(context)!;
+  }
+
   Future<void> _initDB() async {
     final db = await $FloorAirplaneDatabase.databaseBuilder('airplanes.db').build();
     dao = db.airplaneDao;
@@ -67,11 +74,11 @@ class _AirplaneListPageState extends State<AirplaneListPage> {
       final useLast = await showDialog<bool>(
         context: context,
         builder: (_) => AlertDialog(
-          title: const Text("Use Previous Data?"),
-          content: const Text("Do you want to reuse the last 'Add' form input?"),
+          title: Text(t.translate("airplaneListUsePreviousData")),
+          content: Text(t.translate("airplaneListReuseLastInput")),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(context, false), child: const Text("No")),
-            TextButton(onPressed: () => Navigator.pop(context, true), child: const Text("Yes")),
+            TextButton(onPressed: () => Navigator.pop(context, false), child: Text(t.translate("No"))),
+            TextButton(onPressed: () => Navigator.pop(context, true), child: Text(t.translate("Yes"))),
           ],
         ),
       );
@@ -116,7 +123,7 @@ class _AirplaneListPageState extends State<AirplaneListPage> {
         _addFormCapacityController.text.isEmpty ||
         _addFormSpeedController.text.isEmpty ||
         _addFormRangeController.text.isEmpty) {
-      _showSnackBar("All fields must be filled to add an airplane");
+      _showSnackBar(t.translate("airplaneListFormNotice"));
       return;
     }
 
@@ -131,7 +138,7 @@ class _AirplaneListPageState extends State<AirplaneListPage> {
     _clearAddForm();
     await _clearSavedInput();
     _loadAirplanes();
-    _showSnackBar("Airplane added");
+    _showSnackBar(t.translate("airplaneListAirplaneAdded"));
   }
 
   void _clearAddForm() {
@@ -183,7 +190,7 @@ class _AirplaneListPageState extends State<AirplaneListPage> {
         range: int.parse(_detailFormRangeController.text),
       );
       await dao.updateAirplane(updatedAirplane);
-      _showSnackBar("Airplane Updated");
+      _showSnackBar(t.translate("airplaneListAirplaneUpdated"));
       // Refresh list and clear selection
       _loadAirplanes();
       setState(() {
@@ -196,7 +203,7 @@ class _AirplaneListPageState extends State<AirplaneListPage> {
     if (_selectedAirplane == null) return;
 
     await dao.deleteAirplane(_selectedAirplane!);
-    _showSnackBar("Airplane Deleted");
+    _showSnackBar(t.translate("airplaneListAirplaneDeleted"));
     _loadAirplanes();
     setState(() {
       _selectedAirplane = null;
@@ -205,7 +212,6 @@ class _AirplaneListPageState extends State<AirplaneListPage> {
 
   @override
   Widget build(BuildContext context) {
-    final t = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppBar(
         title: Text(t.translate("airplaneListTitle")),
@@ -213,15 +219,15 @@ class _AirplaneListPageState extends State<AirplaneListPage> {
           IconButton(
             icon: const Icon(Icons.help_outline),
             onPressed: () {
-              // This shows the instruction dialog
+              // instruction dialog
               showDialog(
                 context: context,
                 builder: (context) => AlertDialog(
-                  title: Text(t.translate("howToUse")),
+                  title: Text(t.translate("airplaneListHowToUse")),
                   content: Text(t.translate("airplaneListHowToUseContent")),
                   actions: [
                     TextButton(
-                      child: const Text("OK"),
+                      child: Text(t.translate("OK")),
                       onPressed: () => Navigator.of(context).pop(),
                     ),
                   ],
@@ -276,7 +282,7 @@ class _AirplaneListPageState extends State<AirplaneListPage> {
         Expanded(
           flex: 3,
           child: _selectedAirplane == null
-              ? const Center(child: Text("Select an airplane to see details"))
+              ? Center(child: Text(t.translate("airplaneListSelectToSeeDetails")))
               : _buildTabletDetailView(),
         ),
       ],
@@ -289,22 +295,22 @@ class _AirplaneListPageState extends State<AirplaneListPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text("Add New Airplane", style: Theme.of(context).textTheme.titleLarge),
+          Text(t.translate("airplaneListAddAirplane"), style: Theme.of(context).textTheme.titleLarge),
           const SizedBox(height: 8),
           Row(children: [
-            Expanded(child: TextField(controller: _addFormTypeController, decoration: const InputDecoration(labelText: 'Type'))),
+            Expanded(child: TextField(controller: _addFormTypeController, decoration: InputDecoration(labelText: t.translate("Type")))),
             const SizedBox(width: 8),
-            Expanded(child: TextField(controller: _addFormCapacityController, decoration: const InputDecoration(labelText: 'Capacity'), keyboardType: TextInputType.number)),
+            Expanded(child: TextField(controller: _addFormCapacityController, decoration: InputDecoration(labelText: t.translate("Capacity")), keyboardType: TextInputType.number)),
           ]),
           Row(children: [
-            Expanded(child: TextField(controller: _addFormSpeedController, decoration: const InputDecoration(labelText: 'Speed'), keyboardType: TextInputType.number)),
+            Expanded(child: TextField(controller: _addFormSpeedController, decoration: InputDecoration(labelText: t.translate("Speed")), keyboardType: TextInputType.number)),
             const SizedBox(width: 8),
-            Expanded(child: TextField(controller: _addFormRangeController, decoration: const InputDecoration(labelText: 'Range'), keyboardType: TextInputType.number)),
+            Expanded(child: TextField(controller: _addFormRangeController, decoration: InputDecoration(labelText: t.translate("Range")), keyboardType: TextInputType.number)),
           ]),
           const SizedBox(height: 16),
           ElevatedButton(
             onPressed: _addAirplane,
-            child: const Text("Add New Airplane"),
+            child: Text(t.translate("airplaneListAddAirplane")),
           )
         ],
       ),
@@ -319,7 +325,7 @@ class _AirplaneListPageState extends State<AirplaneListPage> {
           final airplane = airplanes[index];
           return ListTile(
             title: Text(airplane.type),
-            subtitle: Text("Capacity: ${airplane.passengerCapacity}, Speed: ${airplane.maxSpeed}, Range: ${airplane.range}"),
+            subtitle: Text("${t.translate("Capacity")}: ${airplane.passengerCapacity}, ${t.translate("Speed")}: ${airplane.maxSpeed}, ${t.translate("Range")}: ${airplane.range}"),
             trailing: const Icon(Icons.chevron_right),
             selected: _selectedAirplane?.id == airplane.id,
             onTap: () => onTap(airplane),
@@ -337,30 +343,30 @@ class _AirplaneListPageState extends State<AirplaneListPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text("Edit: ${_selectedAirplane!.type}", style: Theme.of(context).textTheme.titleLarge),
+            Text("${t.translate("Edit")}: ${_selectedAirplane!.type}", style: Theme.of(context).textTheme.titleLarge),
             const SizedBox(height: 16),
             TextFormField(
               controller: _detailFormTypeController,
-              decoration: const InputDecoration(labelText: 'Type'),
-              validator: (value) => value!.isEmpty ? 'Please enter a type' : null,
+              decoration: InputDecoration(labelText: t.translate("Type")),
+              validator: (value) => value!.isEmpty ? "${t.translate("airplaneListPleaseEnter")} ${t.translate("Type")}" : null,
             ),
             TextFormField(
               controller: _detailFormCapacityController,
-              decoration: const InputDecoration(labelText: 'Capacity'),
+              decoration: InputDecoration(labelText: t.translate("Capacity")),
               keyboardType: TextInputType.number,
-              validator: (value) => value!.isEmpty ? 'Please enter a capacity' : null,
+              validator: (value) => value!.isEmpty ? "${t.translate("airplaneListPleaseEnter")} ${t.translate("Capacity")}" : null,
             ),
             TextFormField(
               controller: _detailFormSpeedController,
-              decoration: const InputDecoration(labelText: 'Max Speed (km/h)'),
+              decoration: InputDecoration(labelText: "${t.translate("airplaneListMaxSpeed")} (km/h)"),
               keyboardType: TextInputType.number,
-              validator: (value) => value!.isEmpty ? 'Please enter a speed' : null,
+              validator: (value) => value!.isEmpty ? "${t.translate("airplaneListPleaseEnter")} ${t.translate("Speed")}" : null,
             ),
             TextFormField(
               controller: _detailFormRangeController,
-              decoration: const InputDecoration(labelText: 'Range (km)'),
+              decoration: InputDecoration(labelText: "${t.translate("Range")} (km)"),
               keyboardType: TextInputType.number,
-              validator: (value) => value!.isEmpty ? 'Please enter a range' : null,
+              validator: (value) => value!.isEmpty ? "${t.translate("airplaneListPleaseEnter")} ${t.translate("Range")}" : null,
             ),
             const Spacer(), // Pushes buttons to the bottom
             Row(
@@ -368,7 +374,7 @@ class _AirplaneListPageState extends State<AirplaneListPage> {
                 Expanded(
                   child: ElevatedButton(
                     onPressed: _updateAirplaneFromTablet,
-                    child: const Text('Update'),
+                    child: Text(t.translate("Update")),
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -376,7 +382,7 @@ class _AirplaneListPageState extends State<AirplaneListPage> {
                   child: ElevatedButton(
                     onPressed: _deleteAirplaneFromTablet,
                     style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-                    child: const Text('Delete'),
+                    child: Text(t.translate("Delete")),
                   ),
                 ),
               ],
@@ -386,7 +392,7 @@ class _AirplaneListPageState extends State<AirplaneListPage> {
               setState(() {
                 _selectedAirplane = null;
               });
-            }, child: const Text("Clear Selection"))
+            }, child: Text(t.translate("airplaneListClearEnter")))
           ],
         ),
       ),
