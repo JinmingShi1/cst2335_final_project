@@ -208,7 +208,28 @@ class _AirplaneListPageState extends State<AirplaneListPage> {
     final t = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppBar(
-        title: Text(t.translate("airplaneListTitle") ?? 'Airplane List'),
+        title: Text(t.translate("airplaneListTitle")),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.help_outline),
+            onPressed: () {
+              // This shows the instruction dialog
+              showDialog(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: Text(t.translate("howToUse")),
+                  content: Text(t.translate("airplaneListHowToUseContent")),
+                  actions: [
+                    TextButton(
+                      child: const Text("OK"),
+                      onPressed: () => Navigator.of(context).pop(),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ],
       ),
       body: LayoutBuilder(
         builder: (context, constraints) {

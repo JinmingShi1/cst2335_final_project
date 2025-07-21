@@ -5,5 +5,6 @@
   "delete": "Delete",
   "helpText": "Fill in airplane details and manage them here.",
   "airplaneListTitle": "Airplane List",
-  "howToUseContent": "Fill in the airplane details below.\nTap 'Add Airplane' to create a new entry.\nTap a list item to edit it.\nPress 'Update' to save changes, or 'Delete' to remove it.\nData is stored securely and remembered next time you open the app."
+  "howToUse": "How to use",
+  "airplaneListHowToUseContent": "Fill in the airplane details below.\nTap 'Add Airplane' to create a new entry.\nTap a list item to edit it.\nPress 'Update' to save changes, or 'Delete' to remove it.\nData is stored securely and remembered next time you open the app."
 }
