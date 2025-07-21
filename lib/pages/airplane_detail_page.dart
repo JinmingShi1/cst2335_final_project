@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../dao/airplane_dao.dart';
 import '../Entities/airplane_entity.dart';
+import '../localization/AppLocalizations.dart';
 
 /// An editable detail page for a single airplane.
 class AirplaneDetailPage extends StatefulWidget {
@@ -18,6 +19,7 @@ class AirplaneDetailPage extends StatefulWidget {
 }
 
 class _AirplaneDetailPageState extends State<AirplaneDetailPage> {
+  late AppLocalizations t;
   final _formKey = GlobalKey<FormState>();
   late TextEditingController _typeController;
   late TextEditingController _capacityController;
@@ -44,6 +46,12 @@ class _AirplaneDetailPageState extends State<AirplaneDetailPage> {
     super.dispose();
   }
 
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    t = AppLocalizations.of(context)!;
+  }
+
   Future<void> _updateAirplane() async {
     if (_formKey.currentState!.validate()) {
       final updatedAirplane = Airplane(
@@ -64,21 +72,21 @@ class _AirplaneDetailPageState extends State<AirplaneDetailPage> {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text("Delete?"),
-        content: Text("Are you sure you want to delete ${widget.airplane.type}?"),
+        title: Text(t.translate("Delete")),
+        content: Text("${t.translate("airplaneListConfirmDelete")} ${widget.airplane.type}?"),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text("Cancel"),
+            child: Text(t.translate("Cancel")),
           ),
           TextButton(
             onPressed: () async {
               await widget.dao.deleteAirplane(widget.airplane);
-              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Airplane Deleted")));
+              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(t.translate("airplaneListDeleted"))));
               Navigator.pop(context);
               Navigator.pop(context, true);
             },
-            child: const Text("Delete", style: TextStyle(color: Colors.red)),
+            child: Text(t.translate("Delete"), style: TextStyle(color: Colors.red)),
           ),
         ],
       ),
@@ -89,7 +97,7 @@ class _AirplaneDetailPageState extends State<AirplaneDetailPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Edit: ${widget.airplane.type}"),
+        title: Text("${t.translate("Edit")}: ${widget.airplane.type}"),
         actions: [
           IconButton(
             icon: const Icon(Icons.delete),
@@ -105,32 +113,32 @@ class _AirplaneDetailPageState extends State<AirplaneDetailPage> {
             children: [
               TextFormField(
                 controller: _typeController,
-                decoration: const InputDecoration(labelText: 'Type'),
-                validator: (value) => value!.isEmpty ? 'Please enter a type' : null,
+                decoration: InputDecoration(labelText: t.translate("Type")),
+                validator: (value) => value!.isEmpty ? "${t.translate("airplaneListPleaseEnter")} ${t.translate("Type")}" : null,
               ),
               TextFormField(
                 controller: _capacityController,
-                decoration: const InputDecoration(labelText: 'Capacity'),
+                decoration: InputDecoration(labelText: t.translate("Capacity")),
                 keyboardType: TextInputType.number,
-                validator: (value) => value!.isEmpty ? 'Please enter a capacity' : null,
+                validator: (value) => value!.isEmpty ? "${t.translate("airplaneListPleaseEnter")} ${t.translate("Capacity")}" : null,
               ),
               TextFormField(
                 controller: _speedController,
-                decoration: const InputDecoration(labelText: 'Max Speed (km/h)'),
+                decoration: InputDecoration(labelText: "${t.translate("airplaneListMaxSpeed")} (km/h)"),
                 keyboardType: TextInputType.number,
-                validator: (value) => value!.isEmpty ? 'Please enter a speed' : null,
+                validator: (value) => value!.isEmpty ? "${t.translate("airplaneListPleaseEnter")} ${t.translate("Speed")}" : null,
               ),
               TextFormField(
                 controller: _rangeController,
-                decoration: const InputDecoration(labelText: 'Range (km)'),
+                decoration: InputDecoration(labelText: "${t.translate("Range")} (km)"),
                 keyboardType: TextInputType.number,
-                validator: (value) => value!.isEmpty ? 'Please enter a range' : null,
+                validator: (value) => value!.isEmpty ? "${t.translate("airplaneListPleaseEnter")} ${t.translate("Range")}" : null,
               ),
               const SizedBox(height: 24),
               ElevatedButton(
                 onPressed: _updateAirplane,
                 style: ElevatedButton.styleFrom(minimumSize: const Size.fromHeight(50)),
-                child: const Text('Update Airplane'),
+                child: Text(t.translate("Update")),
               ),
             ],
           ),
