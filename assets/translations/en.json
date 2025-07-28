@@ -30,5 +30,28 @@
   "airplaneListReuseLastInput": "Do you want to reuse the last form input?",
   "airplaneListConfirmDelete": "Are you sure you want to delete",
   "airplaneListDeleted": "Airplane Deleted",
-  "airplaneListMaxSpeed": "Max Speed"
+  "airplaneListMaxSpeed": "Max Speed",
+
+
+
+  "reservationTitle": "Flight Reservation",
+  "addReservation": "Add your trip",
+  "cancel": "Cancel",
+  "customer": "Customer",
+  "flight": "Flight",
+  "date": "Date",
+  "comment": "Add a comment",
+  "chooseFlight": "Please choose your flight",
+  "yourReservations": "Your Reservations:",
+  "inputsCleared": "Inputs cleared",
+  "pleaseFillFields": "Please fill in all required fields",
+  "added": "Reservation added",
+  "reservationAdded": "Reservation added: {customer} - {flight} on {date}",
+  "reservationDelete": "Delete",
+  "edit": "Edit",
+  "helpTitle": "How to Use",
+  "reservationHelpText": "This page lets you add and view flight reservations.\nFill in the fields, then tap '+' or 'Add your trip'.\nTap an item to view details, or long press to delete.",
+  "ok": "OK",
+  "yes": "Yes",
+  "no": "No"
 }

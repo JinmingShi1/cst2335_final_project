@@ -30,5 +30,27 @@
   "airplaneListReuseLastInput": "Souhaitez-vous réutiliser les dernières données du formulaire ?",
   "airplaneListConfirmDelete": "Êtes-vous sûr de vouloir supprimer",
   "airplaneListDeleted": "Avion supprimé",
-  "airplaneListMaxSpeed": "Vitesse maximale"
+  "airplaneListMaxSpeed": "Vitesse maximale",
+
+  "reservationTitle": "Réservation de vol",
+  "addReservation": "Ajouter votre voyage",
+  "cancel": "Annuler",
+  "customer": "Client",
+  "flight": "Vol",
+  "date": "Date",
+  "comment": "Ajouter un commentaire",
+  "chooseFlight": "Veuillez choisir votre vol",
+  "yourReservations": "Vos réservations :",
+  "inputsCleared": "Champs effacés",
+  "pleaseFillFields": "Veuillez remplir tous les champs obligatoires",
+  "added": "Réservation ajoutée",
+  "reservationAdded": "Réservation ajoutée : {customer} - {flight} le {date}",
+  "reservationDelete": "Supprimer",
+  "edit": "Éditer",
+  "reservationUpdate": "Mettre à jour",
+  "helpTitle": "Comment utiliser",
+  "reservationHelpText": "Cette page vous permet d'ajouter et de voir vos réservations de vol.\nRemplissez les champs, puis appuyez sur '+' ou 'Ajouter votre voyage'.\nAppuyez sur un élément pour voir les détails, ou faites un appui long pour le supprimer.",
+  "ok": "OK",
+  "yes": "Oui",
+  "no": "Non"
 }

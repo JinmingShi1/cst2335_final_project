@@ -9,8 +9,8 @@ abstract class ReservationDao {
   @insert
   Future<int> insertReservation(Reservation reservation);
 
-  @Query('DELETE FROM Reservation WHERE id = :id')
-  Future<void> deleteReservationById(int id);
+  @delete
+  Future<void> deleteReservation(Reservation reservation);
 
   @Query('DELETE FROM Reservation')
   Future<void> deleteAll();
