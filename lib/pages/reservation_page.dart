@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:encrypted_shared_preferences/encrypted_shared_preferences.dart';
-import 'dao/reservationDao.dart';
-import 'entities/Reservation.dart';
-import 'database/reservationDatabase.dart';
 
-late ReservationDao myDAO;
+import '../dao/reservation_dao.dart';
+import '../Entities/reservation_entity.dart';
+import '../database/reservation_database.dart';
+
+late reservation_dao myDAO;
+
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  final db = await $FloorReservationDatabase
+  final db = await $Floorreservation_database
       .databaseBuilder('app_database.db')
       .build();
   myDAO = db.reservationDao;
