@@ -1,24 +1,16 @@
+import 'package:floor/floor.dart';
 import 'package:flutter/material.dart';
+import 'package:encrypted_shared_preferences/encrypted_shared_preferences.dart';
 
-import '../dao/reservation_dao.dart';
+import '../dao/ReservationDao.dart';
 import '../Entities/reservation_entity.dart';
 import '../database/reservation_database.dart';
 
-late reservation_dao myDAO;
-
-
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  final db = await $Floorreservation_database
-      .databaseBuilder('app_database.db')
-      .build();
-  myDAO = db.reservationDao;
-
-  runApp(const ReservationPage());
-}
 
 class ReservationPage extends StatelessWidget {
-  const ReservationPage({super.key});
+  final ReservationDao dao;
+
+  const ReservationPage({super.key, required this.dao});
 
   @override
   Widget build(BuildContext context) {
@@ -28,7 +20,7 @@ class ReservationPage extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
-      home: const ReservationListPage(title: 'Reservation'),
+      home: ReservationListPage(title: 'Reservation', dao: dao),
     );
   }
 }
@@ -46,20 +38,29 @@ class Flight {
 }
 
 class ReservationListPage extends StatefulWidget {
-  const ReservationListPage({super.key, required this.title});
+
   final String title;
+  final ReservationDao dao;
+
+  const  ReservationListPage({
+    super.key,
+    required this.title,
+    required this.dao,
+  });
 
   @override
   State<ReservationListPage> createState() => _ReservationListPageState();
 }
 
 class _ReservationListPageState extends State<ReservationListPage> {
+  late ReservationDao dao;
   List<Reservation> reservations = [];
 
   final customerController = TextEditingController();
   final dateController = TextEditingController();
   final commentController = TextEditingController();
-  final encryptedPrefs = EncryptedSharedPreferences();
+  final EncryptedSharedPreferences _prefs = EncryptedSharedPreferences();
+
 
   Flight? selectedFlight;
   final List<Flight> availableFlights = [
@@ -72,28 +73,29 @@ class _ReservationListPageState extends State<ReservationListPage> {
   @override
   void initState() {
     super.initState();
+    dao = widget.dao;
     _loadReservations();
     _loadSavedInputs();
     selectedFlight = availableFlights.first;
   }
 
   void _loadReservations() async {
-    final items = await myDAO.getAllReservations();
+    final items = await dao.getAllReservations();
     setState(() {
       reservations = items;
     });
   }
 
   void _loadSavedInputs() async {
-    customerController.text = await encryptedPrefs.getString('customer') ?? '';
-    dateController.text = await encryptedPrefs.getString('date') ?? '';
-    commentController.text = await encryptedPrefs.getString('comment') ?? '';
+    customerController.text = await _prefs.getString('customer') ?? '';
+    dateController.text = await _prefs.getString('date') ?? '';
+    commentController.text = await _prefs.getString('comment') ?? '';
   }
 
   void _saveReservation() async {
-    await encryptedPrefs.setString('customer', customerController.text);
-    await encryptedPrefs.setString('date', dateController.text);
-    await encryptedPrefs.setString('comment', commentController.text);
+    await _prefs.setString('customer', customerController.text);
+    await _prefs.setString('date', dateController.text);
+    await _prefs.setString('comment', commentController.text);
 
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Reservation added')),
@@ -131,14 +133,14 @@ class _ReservationListPageState extends State<ReservationListPage> {
       comment: comment,
     );
 
-    await myDAO.insertReservation(newRes);
+    await dao.insertReservation(newRes);
     _loadReservations();
 
     setState(() {
       customerController.clear();
       dateController.clear();
       commentController.clear();
-      selectedFlight = null;
+      selectedFlight = availableFlights.first;;
     });
 
     ScaffoldMessenger.of(context).showSnackBar(
