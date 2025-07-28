@@ -4,13 +4,29 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import './pages/airplane_list_page.dart';
 import 'localization/AppLocalizations.dart';
 
-void main() {
-  runApp(const MyApp());
+import './pages/reservation_page.dart';
+import './dao/ReservationDao.dart';
+import 'database/reservation_database.dart';
 
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // initial reservation DAO
+  final db = await $FloorReservationDatabase
+      .databaseBuilder('app_database.db')
+      .build();
+  final dao = db.reservationDao;
+
+  runApp(MyApp(dao: dao));
 }
 
+
 class MyApp extends StatefulWidget {
-  const MyApp({super.key});
+
+  final ReservationDao dao; //add ReservationDao
+
+  const MyApp({super.key, required this.dao});
 
   static void setLocale(BuildContext context, Locale newLocale) {
     final _MyAppState? state = context.findAncestorStateOfType<_MyAppState>();
@@ -51,12 +67,17 @@ class _MyAppState extends State<MyApp> {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
-      routes: {
-        // '/': (context) => const MyHomePage(),
-        '/airplanes': (context) => const AirplaneListPage(),
-        '/reservation': (context) => const AirplaneListPage(),
+      onGenerateRoute: (settings) {
+        if (settings.name == '/airplanes') {
+          return MaterialPageRoute(builder: (_) => const AirplaneListPage());
+        }
+        if (settings.name == '/reservation') {
+          return MaterialPageRoute(builder: (_) => ReservationPage(dao: widget.dao));
+        }
+        return null;
       },
     );
+
   }
 }
 
@@ -106,7 +127,7 @@ class MyHomePage extends StatelessWidget {
               onPressed: () {
                 Navigator.pushNamed(context, '/reservation');
               },
-              child: Text(t.translate("airplaneListTitle") ?? ''),
+              child: Text(t.translate("Reservation") ?? 'Reservation Page'),
             ),
           ],
         ),
