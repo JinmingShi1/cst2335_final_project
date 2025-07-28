@@ -54,6 +54,7 @@ class _MyAppState extends State<MyApp> {
       routes: {
         // '/': (context) => const MyHomePage(),
         '/airplanes': (context) => const AirplaneListPage(),
+        '/reservation': (context) => const AirplaneListPage(),
       },
     );
   }
@@ -98,6 +99,12 @@ class MyHomePage extends StatelessWidget {
             ElevatedButton(
               onPressed: () {
                 Navigator.pushNamed(context, '/airplanes');
+              },
+              child: Text(t.translate("airplaneListTitle") ?? ''),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pushNamed(context, '/reservation');
               },
               child: Text(t.translate("airplaneListTitle") ?? ''),
             ),
