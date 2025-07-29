@@ -82,7 +82,7 @@ class _$ReservationDatabase extends ReservationDatabase {
     Callback? callback,
   ]) async {
     final databaseOptions = sqflite.OpenDatabaseOptions(
-      version: 1,
+      version: 2,
       onConfigure: (database) async {
         await database.execute('PRAGMA foreign_keys = ON');
         await callback?.onConfigure?.call(database);
@@ -127,6 +127,17 @@ class _$ReservationDao extends ReservationDao {
                   'flight': item.flight,
                   'date': item.date,
                   'comment': item.comment
+                }),
+        _reservationDeletionAdapter = DeletionAdapter(
+            database,
+            'Reservation',
+            ['id'],
+            (Reservation item) => <String, Object?>{
+                  'id': item.id,
+                  'customer': item.customer,
+                  'flight': item.flight,
+                  'date': item.date,
+                  'comment': item.comment
                 });
 
   final sqflite.DatabaseExecutor database;
@@ -136,6 +147,8 @@ class _$ReservationDao extends ReservationDao {
   final QueryAdapter _queryAdapter;
 
   final InsertionAdapter<Reservation> _reservationInsertionAdapter;
+
+  final DeletionAdapter<Reservation> _reservationDeletionAdapter;
 
   @override
   Future<List<Reservation>> getAllReservations() async {
@@ -149,12 +162,6 @@ class _$ReservationDao extends ReservationDao {
   }
 
   @override
-  Future<void> deleteReservationById(int id) async {
-    await _queryAdapter.queryNoReturn('DELETE FROM Reservation WHERE id = ?1',
-        arguments: [id]);
-  }
-
-  @override
   Future<void> deleteAll() async {
     await _queryAdapter.queryNoReturn('DELETE FROM Reservation');
   }
@@ -163,5 +170,10 @@ class _$ReservationDao extends ReservationDao {
   Future<int> insertReservation(Reservation reservation) {
     return _reservationInsertionAdapter.insertAndReturnId(
         reservation, OnConflictStrategy.abort);
+  }
+
+  @override
+  Future<void> deleteReservation(Reservation reservation) async {
+    await _reservationDeletionAdapter.delete(reservation);
   }
 }
