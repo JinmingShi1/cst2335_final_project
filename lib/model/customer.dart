@@ -14,12 +14,13 @@ class Customer {
     required this.firstName,
     required this.lastName,
     required this.address,
-    required this.dateOfBirth,
+    required this.dateOfBirth, required String name, required String email,
   });
 
   factory Customer.withDateTime({
     int? id,
     required String firstName,
+
     required String lastName,
     required String address,
     required DateTime dateOfBirth,
@@ -29,10 +30,16 @@ class Customer {
       firstName: firstName,
       lastName: lastName,
       address: address,
-      dateOfBirth: dateOfBirth.millisecondsSinceEpoch,
+      dateOfBirth: dateOfBirth.millisecondsSinceEpoch, name: '', email: '',
     );
   }
 
   String get fullName => '$firstName $lastName';
   DateTime get birthDate => DateTime.fromMillisecondsSinceEpoch(dateOfBirth);
+
+  get name => null;
+
+  String? get email => null;
+
+  String? get customer => null;
 }

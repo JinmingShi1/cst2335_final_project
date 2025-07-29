@@ -2,7 +2,6 @@ import 'package:floor/floor.dart';
 
 import '../model/customer.dart';
 
-
 @dao
 abstract class CustomerDao {
   @Query('SELECT * FROM Customer ORDER BY firstName, lastName')
