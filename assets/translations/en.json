@@ -32,8 +32,6 @@
   "airplaneListDeleted": "Airplane Deleted",
   "airplaneListMaxSpeed": "Max Speed",
 
-
-
   "reservationTitle": "Flight Reservation",
   "addReservation": "Add your trip",
   "cancel": "Cancel",
@@ -53,5 +51,41 @@
   "reservationHelpText": "This page lets you add and view flight reservations.\nFill in the fields, then tap '+' or 'Add your trip'.\nTap an item to view details, or long press to delete.",
   "ok": "OK",
   "yes": "Yes",
-  "no": "No"
+  "no": "No",
+
+  "flightListTitle": "Flights List",
+  "flightListUsePreviousData": "Use Previous Data?",
+  "flightListReuseLastInput": "Do you want to reuse the last flight's information?",
+  "flightListFormNotice": "All fields must be filled to add a flight.",
+  "flightListFlightAdded": "Flight Added",
+  "flightListFlightUpdated": "Flight Updated",
+  "flightListFlightDeleted": "Flight Deleted",
+  "flightListSelectToSeeDetails": "Select a flight to see details",
+  "flightListHowToUse": "How to Use",
+  "flightListHowToUseContent": "Fill in the flight details below.\nTap 'Add Flight' to create a new route.\nTap a list item to edit or delete it.",
+  "flightListAddFlight": "Add New Flight",
+  "flightListDepartureCity": "Departure City",
+  "flightListDestinationCity": "Destination City",
+  "flightListDepartureTime": "Departure Time",
+  "flightListArrivalTime": "Arrival Time",
+  "flightListConfirmDelete": "Are you sure you want to delete the flight",
+  "flightListClearSelection": "Clear Selection",
+
+  "customerListTitle": "Customer List",
+  "customerListHowToUse": "How to Use",
+  "customerListHowToUseContent": "Add a new customer using the form.\nTap on a customer in the list to view and edit their details.",
+  "customerListUsePreviousData": "Use Previous Data?",
+  "customerListReuseLastInput": "Do you want to start with the information from the last customer you added?",
+  "customerListSelectToSeeDetails": "Select a customer to see details",
+  "customerListAddCustomer": "Add New Customer",
+  "customerListPleaseEnter": "Please enter a value",
+  "customerListCustomerAdded": "Customer Added",
+  "customerListCustomerDeleted": "Customer Deleted",
+  "customerListCustomerUpdated": "Customer Updated",
+  "customerListFormNotice": "All fields must be filled to add a customer",
+  "customerListConfirmDelete": "Are you sure you want to delete",
+  "customerListFirstName": "First Name",
+  "customerListLastName": "Last Name",
+  "customerListAddress": "Address",
+  "customerListDob": "Date of Birth"
 }
