@@ -69,5 +69,23 @@
   "flightListDepartureTime": "Departure Time",
   "flightListArrivalTime": "Arrival Time",
   "flightListConfirmDelete": "Are you sure you want to delete the flight",
-  "flightListClearSelection": "Clear Selection"
+  "flightListClearSelection": "Clear Selection",
+
+  "customerListTitle": "Customer List",
+  "customerListHowToUse": "How to Use",
+  "customerListHowToUseContent": "Add a new customer using the form.\nTap on a customer in the list to view and edit their details.",
+  "customerListUsePreviousData": "Use Previous Data?",
+  "customerListReuseLastInput": "Do you want to start with the information from the last customer you added?",
+  "customerListSelectToSeeDetails": "Select a customer to see details",
+  "customerListAddCustomer": "Add New Customer",
+  "customerListPleaseEnter": "Please enter a value",
+  "customerListCustomerAdded": "Customer Added",
+  "customerListCustomerDeleted": "Customer Deleted",
+  "customerListCustomerUpdated": "Customer Updated",
+  "customerListFormNotice": "All fields must be filled to add a customer",
+  "customerListConfirmDelete": "Are you sure you want to delete",
+  "customerListFirstName": "First Name",
+  "customerListLastName": "Last Name",
+  "customerListAddress": "Address",
+  "customerListDob": "Date of Birth"
 }
