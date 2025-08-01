@@ -24,6 +24,24 @@ void main() async {
   final reservationDao = db.reservationDao;
   final flightDao = db.flightDao;
 
+  final existingFlights = await flightDao.findAllFlights();
+  if (existingFlights.isEmpty) {
+    await flightDao.insertFlight(Flight(
+      departureCity: 'Toronto',
+      destinationCity: 'Vancouver',
+      departureTime: '10:00',
+      arrivalTime: '13:00',
+    ));
+    await flightDao.insertFlight(Flight(
+      departureCity: 'Montreal',
+      destinationCity: 'Calgary',
+      departureTime: '09:30',
+      arrivalTime: '12:45',
+    ));
+    print("✅ Default flights inserted.");
+  }
+
+
   runApp(MyApp(
     reservationDao: reservationDao,
     flightDao: flightDao,
