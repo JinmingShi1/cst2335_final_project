@@ -5,8 +5,7 @@ import '../Entities/reservation_entity.dart';
 import '../localization/AppLocalizations.dart';
 import 'package:cst2335_final_project/main.dart';
 import '../Entities/flight_entity.dart';
-
-
+import '../database/reservation_database.dart';
 
 void showHelpDialog(BuildContext context) {
   final t = AppLocalizations.of(context)!;
@@ -24,18 +23,6 @@ void showHelpDialog(BuildContext context) {
     ),
   );
 }
-
-/*class Flight {
-  final String flightNumber;
-  final String departureCity;
-  final String arrivalCity;
-  Flight({
-    required this.flightNumber,
-    required this.departureCity,
-    required this.arrivalCity,
-  });
-}
-*/
 
 class ReservationPage extends StatelessWidget {
   final ReservationDao dao;
@@ -66,30 +53,14 @@ class ReservationListPage extends StatefulWidget {
 class _ReservationListPageState extends State<ReservationListPage> {
   late ReservationDao dao;
   List<Reservation> reservations = [];
+  List<Flight> availableFlights = [];
+
   final customerController = TextEditingController();
   final dateController = TextEditingController();
   final commentController = TextEditingController();
   final EncryptedSharedPreferences _prefs = EncryptedSharedPreferences();
 
   Flight? selectedFlight;
-  final List<Flight> availableFlights = [
-    Flight(
-      id: 1,
-      departureCity: 'Toronto',
-      destinationCity: 'Vancouver',
-      departureTime: '10:00',
-      arrivalTime: '13:00',
-    ),
-    Flight(
-      id: 2,
-      departureCity: 'Montreal',
-      destinationCity: 'Calgary',
-      departureTime: '09:30',
-      arrivalTime: '12:45',
-    ),
-  ];
-
-
   Reservation? selectedReservation;
 
   String _twoDigits(int n) => n.toString().padLeft(2, '0');
@@ -100,14 +71,24 @@ class _ReservationListPageState extends State<ReservationListPage> {
     dao = widget.dao;
     _loadReservations();
     _loadSavedInputs();
-    selectedFlight = availableFlights.first;
+    _loadFlights(); // ⬅ 加载数据库中的航班
+  }
+
+  void _loadFlights() async {
+    final db = await $FloorReservationDatabase
+        .databaseBuilder('app_database.db')
+        .build();
+    final flights = await db.flightDao.findAllFlights();
+    setState(() {
+      availableFlights = flights;
+      selectedFlight = flights.isNotEmpty ? flights.first : null;
+    });
   }
 
   void _loadReservations() async {
     final items = await dao.getAllReservations();
     setState(() {
       reservations = items;
-      //  selectedReservation
       if (selectedReservation != null &&
           !reservations.any((r) => r.id == selectedReservation!.id)) {
         selectedReservation = null;
@@ -161,7 +142,7 @@ class _ReservationListPageState extends State<ReservationListPage> {
       customerController.clear();
       dateController.clear();
       commentController.clear();
-      selectedFlight = availableFlights.first;
+      selectedFlight = availableFlights.isNotEmpty ? availableFlights.first : null;
     });
 
     ScaffoldMessenger.of(context).showSnackBar(
@@ -173,7 +154,6 @@ class _ReservationListPageState extends State<ReservationListPage> {
     Navigator.pop(context);
   }
 
-  //delete the record which by clicks
   void _deleteSelectedReservation() async {
     if (selectedReservation != null) {
       await dao.deleteReservation(selectedReservation!);
@@ -189,35 +169,9 @@ class _ReservationListPageState extends State<ReservationListPage> {
     final t = AppLocalizations.of(context)!;
     var size = MediaQuery.of(context).size;
 
-
     if (size.width > size.height && size.width > 720.0) {
-
       return Scaffold(
-        appBar: AppBar(
-          backgroundColor: Colors.deepPurpleAccent.shade100,
-          leading: IconButton(
-            icon: const Icon(Icons.home),
-            onPressed: _goBackToHome,
-          ),
-          title: Text(widget.title),
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.info_outline),
-              onPressed: () => showHelpDialog(context),
-            ),
-            PopupMenuButton<String>(
-              icon: const Icon(Icons.language),
-              onSelected: (value) {
-                Locale newLocale = (value == 'en') ? const Locale('en') : const Locale('fr');
-                MyApp.setLocale(context, newLocale);
-              },
-              itemBuilder: (context) => const [
-                PopupMenuItem(value: 'en', child: Text('English (US)')),
-                PopupMenuItem(value: 'fr', child: Text('Français (French)')),
-              ],
-            ),
-          ],
-        ),
+        appBar: _buildAppBar(t),
         body: Row(
           children: [
             Expanded(flex: 1, child: _listViewPage(t)),
@@ -232,33 +186,8 @@ class _ReservationListPageState extends State<ReservationListPage> {
         ),
       );
     } else {
-
       return Scaffold(
-        appBar: AppBar(
-          backgroundColor: Colors.deepPurpleAccent.shade100,
-          leading: IconButton(
-            icon: const Icon(Icons.home),
-            onPressed: _goBackToHome,
-          ),
-          title: Text(widget.title),
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.info_outline),
-              onPressed: () => showHelpDialog(context),
-            ),
-            PopupMenuButton<String>(
-              icon: const Icon(Icons.language),
-              onSelected: (value) {
-                Locale newLocale = (value == 'en') ? const Locale('en') : const Locale('fr');
-                MyApp.setLocale(context, newLocale);
-              },
-              itemBuilder: (context) => const [
-                PopupMenuItem(value: 'en', child: Text('English (US)')),
-                PopupMenuItem(value: 'fr', child: Text('Français (French)')),
-              ],
-            ),
-          ],
-        ),
+        appBar: _buildAppBar(t),
         body: selectedReservation == null
             ? _listViewPage(t)
             : _detailsPage(context, t),
@@ -266,6 +195,33 @@ class _ReservationListPageState extends State<ReservationListPage> {
     }
   }
 
+  AppBar _buildAppBar(AppLocalizations t) {
+    return AppBar(
+      backgroundColor: Colors.deepPurpleAccent.shade100,
+      leading: IconButton(
+        icon: const Icon(Icons.home),
+        onPressed: _goBackToHome,
+      ),
+      title: Text(widget.title),
+      actions: [
+        IconButton(
+          icon: const Icon(Icons.info_outline),
+          onPressed: () => showHelpDialog(context),
+        ),
+        PopupMenuButton<String>(
+          icon: const Icon(Icons.language),
+          onSelected: (value) {
+            Locale newLocale = (value == 'en') ? const Locale('en') : const Locale('fr');
+            MyApp.setLocale(context, newLocale);
+          },
+          itemBuilder: (context) => const [
+            PopupMenuItem(value: 'en', child: Text('English (US)')),
+            PopupMenuItem(value: 'fr', child: Text('Français (French)')),
+          ],
+        ),
+      ],
+    );
+  }
 
   Widget _listViewPage(AppLocalizations t) {
     return Padding(
@@ -274,21 +230,11 @@ class _ReservationListPageState extends State<ReservationListPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-
-            SizedBox(
-              width: 400,
-              child: TextField(
-                controller: customerController,
-                decoration: InputDecoration(labelText: t.translate('customer')),
-              ),
-            ),
+            _buildTextField(t.translate('customer')!, customerController),
             const SizedBox(height: 20),
             SizedBox(
               width: 400,
-              child: Text(
-                t.translate('chooseFlight'),
-                style: const TextStyle(fontSize: 16),
-              ),
+              child: Text(t.translate('chooseFlight'), style: const TextStyle(fontSize: 16)),
             ),
             const SizedBox(height: 8),
             SizedBox(
@@ -299,9 +245,7 @@ class _ReservationListPageState extends State<ReservationListPage> {
                 items: availableFlights.map((flight) {
                   return DropdownMenuItem(
                     value: flight,
-                    child: Text(
-                        '${flight.departureCity} → ${flight.destinationCity} (${flight.departureTime})'
-                    ),
+                    child: Text('${flight.departureCity} → ${flight.destinationCity} (${flight.departureTime})'),
                   );
                 }).toList(),
                 onChanged: (Flight? value) {
@@ -312,77 +256,17 @@ class _ReservationListPageState extends State<ReservationListPage> {
               ),
             ),
             const SizedBox(height: 20),
-            SizedBox(
-              width: 400,
-              child: TextField(
-                controller: dateController,
-                decoration: InputDecoration(labelText: t.translate('date')),
-                readOnly: true,
-                onTap: () async {
-                  DateTime? pickDate = await showDatePicker(
-                    context: context,
-                    initialDate: DateTime.now(),
-                    firstDate: DateTime(2022),
-                    lastDate: DateTime(2060),
-                  );
-                  if (pickDate != null) {
-                    String formatted =
-                        "${pickDate.year}-${_twoDigits(pickDate.month)}-${_twoDigits(pickDate.day)}";
-                    setState(() {
-                      dateController.text = formatted;
-                    });
-                  }
-                },
-              ),
-            ),
+            _buildDatePicker(t),
             const SizedBox(height: 20),
-            SizedBox(
-              width: 400,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  TextField(
-                    controller: commentController,
-                    decoration: InputDecoration(
-                      labelText: t.translate('comment'),
-                      border: const OutlineInputBorder(),
-                      alignLabelWithHint: true,
-                    ),
-                    keyboardType: TextInputType.multiline,
-                    maxLines: null,
-                    minLines: 5,
-                  ),
-                  const SizedBox(height: 20),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: _addReservation,
-                          child: Text(t.translate('addReservation')),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: _cancelReservation,
-                          child: Text(t.translate('cancel')),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
+            _buildCommentBox(t),
             const SizedBox(height: 20),
-            Text(
-              t.translate('yourReservations'),
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
+            _buildButtons(t),
+            const SizedBox(height: 20),
+            Text(t.translate('yourReservations'), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             const SizedBox(height: 10),
             SizedBox(
               height: 180,
               child: ListView.builder(
-                shrinkWrap: true,
                 itemCount: reservations.length,
                 itemBuilder: (context, index) {
                   final r = reservations[index];
@@ -392,15 +276,7 @@ class _ReservationListPageState extends State<ReservationListPage> {
                         selectedReservation = r;
                       });
                     },
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      children: [
-                        Text(
-                          '${index + 1}: ${r.customer} - ${r.flight} - ${r.date}',
-                          style: const TextStyle(fontSize: 14),
-                        ),
-                      ],
-                    ),
+                    child: Text('${index + 1}: ${r.customer} - ${r.flight} - ${r.date}', style: const TextStyle(fontSize: 14)),
                   );
                 },
               ),
@@ -411,15 +287,81 @@ class _ReservationListPageState extends State<ReservationListPage> {
     );
   }
 
-  // detailPage
+  Widget _buildTextField(String label, TextEditingController controller) {
+    return SizedBox(
+      width: 400,
+      child: TextField(
+        controller: controller,
+        decoration: InputDecoration(labelText: label),
+      ),
+    );
+  }
+
+  Widget _buildDatePicker(AppLocalizations t) {
+    return SizedBox(
+      width: 400,
+      child: TextField(
+        controller: dateController,
+        decoration: InputDecoration(labelText: t.translate('date')),
+        readOnly: true,
+        onTap: () async {
+          DateTime? pickDate = await showDatePicker(
+            context: context,
+            initialDate: DateTime.now(),
+            firstDate: DateTime(2022),
+            lastDate: DateTime(2060),
+          );
+          if (pickDate != null) {
+            String formatted = "${pickDate.year}-${_twoDigits(pickDate.month)}-${_twoDigits(pickDate.day)}";
+            setState(() {
+              dateController.text = formatted;
+            });
+          }
+        },
+      ),
+    );
+  }
+
+  Widget _buildCommentBox(AppLocalizations t) {
+    return SizedBox(
+      width: 400,
+      child: TextField(
+        controller: commentController,
+        decoration: InputDecoration(
+          labelText: t.translate('comment'),
+          border: const OutlineInputBorder(),
+          alignLabelWithHint: true,
+        ),
+        keyboardType: TextInputType.multiline,
+        maxLines: null,
+        minLines: 5,
+      ),
+    );
+  }
+
+  Widget _buildButtons(AppLocalizations t) {
+    return Row(
+      children: [
+        Expanded(
+          child: ElevatedButton(
+            onPressed: _addReservation,
+            child: Text(t.translate('addReservation')),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: ElevatedButton(
+            onPressed: _cancelReservation,
+            child: Text(t.translate('cancel')),
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _detailsPage(BuildContext context, AppLocalizations t) {
     if (selectedReservation == null) {
-      return Center(
-        child: Text(
-          t.translate('Check your Reservation'),
-          style: const TextStyle(fontSize: 20),
-        ),
-      );
+      return Center(child: Text(t.translate('Check your Reservation'), style: const TextStyle(fontSize: 20)));
     }
     final r = selectedReservation!;
     return Padding(
@@ -430,7 +372,6 @@ class _ReservationListPageState extends State<ReservationListPage> {
           width: 420,
           padding: const EdgeInsets.all(20.0),
           child: Column(
-            mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text("${t.translate('customer')}: ${r.customer}", style: const TextStyle(fontSize: 20)),
@@ -439,8 +380,7 @@ class _ReservationListPageState extends State<ReservationListPage> {
               const SizedBox(height: 10),
               Text("${t.translate('date')}: ${r.date}", style: const TextStyle(fontSize: 18)),
               const SizedBox(height: 10),
-              if ((r.comment ?? '').isNotEmpty)
-              Text(r.comment!, style: const TextStyle(fontSize: 18)),
+              if ((r.comment ?? '').isNotEmpty) Text(r.comment!, style: const TextStyle(fontSize: 18)),
               const SizedBox(height: 30),
               Row(
                 children: [
@@ -454,9 +394,7 @@ class _ReservationListPageState extends State<ReservationListPage> {
                   ),
                   const SizedBox(width: 16),
                   ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.redAccent,
-                    ),
+                    style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
                     onPressed: () async {
                       await dao.deleteReservation(r);
                       setState(() {
