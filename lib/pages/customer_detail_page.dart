@@ -3,8 +3,11 @@ import '../dao/customer_dao.dart';
 import '../Entities/customer_entity.dart';
 import '../localization/AppLocalizations.dart';
 
+/// A page for editing the details of a single customer.
 class CustomerDetailPage extends StatefulWidget {
+  /// The customer whose details are being edited.
   final Customer customer;
+  /// The Data Access Object for customer database operations.
   final CustomerDao dao;
 
   const CustomerDetailPage({
@@ -17,6 +20,7 @@ class CustomerDetailPage extends StatefulWidget {
   State<CustomerDetailPage> createState() => _CustomerDetailPageState();
 }
 
+/// State for the [CustomerDetailPage].
 class _CustomerDetailPageState extends State<CustomerDetailPage> {
   late AppLocalizations t;
   final _formKey = GlobalKey<FormState>();
@@ -35,6 +39,7 @@ class _CustomerDetailPageState extends State<CustomerDetailPage> {
     _dobCtrl = TextEditingController(text: _formatDate(widget.customer.dateOfBirth));
   }
 
+  /// Formats a timestamp into a 'YYYY-MM-DD' string.
   String _formatDate(int timestamp) {
     return DateTime.fromMillisecondsSinceEpoch(timestamp).toIso8601String().substring(0, 10);
   }
@@ -54,6 +59,7 @@ class _CustomerDetailPageState extends State<CustomerDetailPage> {
     t = AppLocalizations.of(context)!;
   }
 
+  /// Opens a date picker to select the customer's date of birth.
   Future<void> _pickDate() async {
     DateTime? pickedDate = await showDatePicker(
         context: context,
@@ -68,6 +74,7 @@ class _CustomerDetailPageState extends State<CustomerDetailPage> {
     }
   }
 
+  /// Validates the form and updates the customer in the database.
   Future<void> _onUpdatePressed() async {
     if (_formKey.currentState!.validate()) {
       final updatedCustomer = Customer(
@@ -86,6 +93,7 @@ class _CustomerDetailPageState extends State<CustomerDetailPage> {
     }
   }
 
+  /// Shows a confirmation dialog before deleting the customer.
   Future<void> _onDeletePressed() async {
     showDialog(
       context: context,

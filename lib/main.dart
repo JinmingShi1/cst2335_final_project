@@ -11,6 +11,9 @@ import './database/reservation_database.dart';
 import './pages/customer_list_page.dart';
 import './pages/flight_list_page.dart';
 
+/// The main entry point for the application.
+///
+/// Initializes the database and runs the app.
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -23,12 +26,16 @@ void main() async {
   runApp(MyApp(dao: dao));
 }
 
+/// The root widget of the application.
+///
+/// This widget is stateful to allow for dynamic locale changes.
 class MyApp extends StatefulWidget {
-
+  /// The Data Access Object for reservations.
   final ReservationDao dao; //add ReservationDao
 
   const MyApp({super.key, required this.dao});
 
+  /// Allows any widget in the tree to change the application's locale.
   static void setLocale(BuildContext context, Locale newLocale) {
     final _MyAppState? state = context.findAncestorStateOfType<_MyAppState>();
     state?.changeLanguage(newLocale);
@@ -40,9 +47,12 @@ class MyApp extends StatefulWidget {
   }
 }
 
+/// The state for [MyApp], managing the application's current locale.
 class _MyAppState extends State<MyApp> {
+  /// The currently active locale for the application.
   Locale _locale = const Locale('en');
 
+  /// Updates the application's locale and rebuilds the UI.
   void changeLanguage(Locale newLocale) {
     setState(() {
       _locale = newLocale;
@@ -89,26 +99,22 @@ class _MyAppState extends State<MyApp> {
   }
 }
 
+/// The home page of the application, displaying the main menu.
 class MyHomePage extends StatelessWidget {
   const MyHomePage({super.key});
 
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
 
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: Text(t.translate('title') ?? ''),
+        title: Text(t.translate('title') ?? 'Project'),
         actions: [
           PopupMenuButton<String>(
             onSelected: (lang) {
-              Locale newLocale;
-              if (lang == 'en') {
-                newLocale = const Locale('en');
-              } else {
-                newLocale = const Locale('fr');
-              }
+              final newLocale = Locale(lang);
               MyApp.setLocale(context, newLocale);
             },
             itemBuilder: (context) => const [
@@ -118,35 +124,83 @@ class MyHomePage extends StatelessWidget {
           )
         ],
       ),
-      body: Center(
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            // A more prominent welcome text
+            Text(
+              t.translate('helpText') ?? 'Select a feature to begin.',
+              style: theme.textTheme.titleLarge,
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+            // The GridView takes up the remaining space
+            Expanded(
+              child: GridView.count(
+                crossAxisCount: 2, // 2 items per row
+                crossAxisSpacing: 16,
+                mainAxisSpacing: 16,
+                children: [
+                  _buildMenuCard(
+                    context: context,
+                    icon: Icons.people_alt_outlined,
+                    title: t.translate("customerListTitle") ?? 'Customers',
+                    routeName: '/customers',
+                  ),
+                  _buildMenuCard(
+                    context: context,
+                    icon: Icons.airplanemode_active,
+                    title: t.translate("airplaneListTitle") ?? 'Airplanes',
+                    routeName: '/airplanes',
+                  ),
+                  _buildMenuCard(
+                    context: context,
+                    icon: Icons.flight_takeoff,
+                    title: t.translate("flightListTitle") ?? 'Flights',
+                    routeName: '/flightList',
+                  ),
+                  _buildMenuCard(
+                    context: context,
+                    icon: Icons.book_online,
+                    title: t.translate("reservationTitle") ?? 'Reservations',
+                    routeName: '/reservation',
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// A helper widget to build the styled menu cards, avoiding code repetition.
+  Widget _buildMenuCard({
+    required BuildContext context,
+    required IconData icon,
+    required String title,
+    required String routeName,
+  }) {
+    final theme = Theme.of(context);
+    return Card(
+      elevation: 4.0,
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: () => Navigator.pushNamed(context, routeName),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            Text(t.translate('helpText') ?? ''),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pushNamed(context, '/customers');
-              },
-              child: Text(t.translate("customerListTitle") ?? ''),
+          children: [
+            Icon(
+              icon,
+              size: 50,
+              color: theme.colorScheme.primary,
             ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pushNamed(context, '/airplanes');
-              },
-              child: Text(t.translate("airplaneListTitle") ?? ''),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pushNamed(context, '/flightList');
-              },
-              child: Text(t.translate("flightListTitle") ?? 'Flights Page'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pushNamed(context, '/reservation');
-              },
-              child: Text(t.translate("Reservation") ?? 'Reservation Page'),
+            const SizedBox(height: 16),
+            Text(
+              title,
+              style: theme.textTheme.titleMedium,
+              textAlign: TextAlign.center,
             ),
           ],
         ),

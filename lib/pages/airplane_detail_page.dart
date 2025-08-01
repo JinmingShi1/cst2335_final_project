@@ -4,8 +4,12 @@ import '../Entities/airplane_entity.dart';
 import '../localization/AppLocalizations.dart';
 
 /// An editable detail page for a single airplane.
+///
+/// Allows users to update or delete an airplane's information.
 class AirplaneDetailPage extends StatefulWidget {
+  /// The airplane instance to be displayed and edited.
   final Airplane airplane;
+  /// The Data Access Object for database operations.
   final AirplaneDao dao;
 
   const AirplaneDetailPage({
@@ -18,12 +22,19 @@ class AirplaneDetailPage extends StatefulWidget {
   State<AirplaneDetailPage> createState() => _AirplaneDetailPageState();
 }
 
+/// The state and logic for the [AirplaneDetailPage].
 class _AirplaneDetailPageState extends State<AirplaneDetailPage> {
+  /// Instance for handling localization.
   late AppLocalizations t;
+  /// Global key for the form to handle validation.
   final _formKey = GlobalKey<FormState>();
+  /// Controller for the airplane type text field.
   late TextEditingController _typeController;
+  /// Controller for the passenger capacity text field.
   late TextEditingController _capacityController;
+  /// Controller for the maximum speed text field.
   late TextEditingController _speedController;
+  /// Controller for the range text field.
   late TextEditingController _rangeController;
 
   @override
@@ -52,6 +63,7 @@ class _AirplaneDetailPageState extends State<AirplaneDetailPage> {
     t = AppLocalizations.of(context)!;
   }
 
+  /// Validates the form and updates the airplane in the database.
   Future<void> _updateAirplane() async {
     if (_formKey.currentState!.validate()) {
       final updatedAirplane = Airplane(
@@ -68,6 +80,7 @@ class _AirplaneDetailPageState extends State<AirplaneDetailPage> {
     }
   }
 
+  /// Displays a confirmation dialog before deleting the airplane.
   Future<void> _confirmDelete() async {
     showDialog(
       context: context,

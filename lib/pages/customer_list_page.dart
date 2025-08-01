@@ -6,6 +6,7 @@ import '../Entities/customer_entity.dart';
 import '../localization/AppLocalizations.dart';
 import 'customer_detail_page.dart';
 
+/// A page for displaying and managing a list of customers.
 class CustomerListPage extends StatefulWidget {
   const CustomerListPage({super.key});
 
@@ -13,10 +14,12 @@ class CustomerListPage extends StatefulWidget {
   State<CustomerListPage> createState() => _CustomerListPageState();
 }
 
+/// State for the [CustomerListPage].
 class _CustomerListPageState extends State<CustomerListPage> {
   late AppLocalizations t;
   late CustomerDao _dao;
   List<Customer> _customers = [];
+  /// The currently selected customer in the tablet layout.
   Customer? _selectedCustomer;
   final _storage = const FlutterSecureStorage();
 
@@ -26,6 +29,7 @@ class _CustomerListPageState extends State<CustomerListPage> {
     _connectToDatabase();
   }
 
+  /// Establishes the database connection and loads initial data.
   Future<void> _connectToDatabase() async {
     final db = await $FloorCustomerDatabase.databaseBuilder('customer_database.db').build();
     _dao = db.customerDao;
@@ -39,6 +43,7 @@ class _CustomerListPageState extends State<CustomerListPage> {
     t = AppLocalizations.of(context)!;
   }
 
+  /// Fetches all customers from the database and updates the UI.
   Future<void> _refreshCustomerList() async {
     final customerList = await _dao.findAllCustomers();
     setState(() {
@@ -46,6 +51,7 @@ class _CustomerListPageState extends State<CustomerListPage> {
     });
   }
 
+  /// Displays an instructional dialog.
   void _showInstructionDialog() {
     showDialog(
       context: context,
@@ -57,6 +63,7 @@ class _CustomerListPageState extends State<CustomerListPage> {
     );
   }
 
+  /// Asks the user if they want to reuse the last entered data.
   Future<void> _promptForSavedData() async {
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       final useLast = await showDialog<bool>(
@@ -77,6 +84,7 @@ class _CustomerListPageState extends State<CustomerListPage> {
     });
   }
 
+  /// Shows a modal bottom sheet for adding a new customer.
   void _showAddCustomerSheet({bool loadPrevious = false}) {
     final firstNameCtrl = TextEditingController();
     final lastNameCtrl = TextEditingController();
@@ -151,6 +159,7 @@ class _CustomerListPageState extends State<CustomerListPage> {
     );
   }
 
+  /// Navigates to the detail page for a given customer (for phones).
   void _handleCustomerTapForPhone(Customer customer) async {
     final result = await Navigator.push(
       context,
@@ -161,6 +170,7 @@ class _CustomerListPageState extends State<CustomerListPage> {
     }
   }
 
+  /// Selects a customer to show their details in the tablet layout.
   void _handleCustomerTapForTablet(Customer customer) {
     setState(() {
       _selectedCustomer = customer;
@@ -186,6 +196,7 @@ class _CustomerListPageState extends State<CustomerListPage> {
     );
   }
 
+  /// Builds the UI layout for phone-sized screens.
   Widget _buildPhoneLayout() {
     return _customers.isEmpty
         ? Center(child: Text(t.translate("customerListNoCustomers")))
@@ -199,6 +210,7 @@ class _CustomerListPageState extends State<CustomerListPage> {
     );
   }
 
+  /// Builds the UI layout for tablet-sized screens.
   Widget _buildTabletLayout() {
     return Row(
       children: [
@@ -236,7 +248,7 @@ class _CustomerListPageState extends State<CustomerListPage> {
           child: _selectedCustomer == null
               ? Center(child: Text(t.translate("customerListSelectToSeeDetails")))
               : CustomerDetailPage(
-            key: ValueKey(_selectedCustomer!.id), // Important for state reset
+            key: ValueKey(_selectedCustomer!.id),
             customer: _selectedCustomer!,
             dao: _dao,
           ),
@@ -245,6 +257,7 @@ class _CustomerListPageState extends State<CustomerListPage> {
     );
   }
 
+  /// Builds a single card widget representing a customer in the list.
   Widget _buildCustomerCard(Customer customer, VoidCallback onTap) {
     return Card(
       elevation: 3,

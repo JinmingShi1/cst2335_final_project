@@ -8,6 +8,7 @@ import 'package:cst2335_final_project/main.dart';
 import '../Entities/flight_entity.dart';
 import '../database/reservation_database.dart';
 
+/// Displays a help dialog with instructions.
 void showHelpDialog(BuildContext context) {
   final t = AppLocalizations.of(context)!;
   showDialog(
@@ -25,7 +26,9 @@ void showHelpDialog(BuildContext context) {
   );
 }
 
+/// A wrapper widget that provides the [ReservationDao] to the main reservation page.
 class ReservationPage extends StatelessWidget {
+  /// The Data Access Object for reservations.
   final ReservationDao dao;
   const ReservationPage({super.key, required this.dao});
 
@@ -38,8 +41,11 @@ class ReservationPage extends StatelessWidget {
   }
 }
 
+/// The main stateful widget for the reservation feature.
 class ReservationListPage extends StatefulWidget {
+  /// The title displayed in the AppBar.
   final String title;
+  /// The Data Access Object for reservations.
   final ReservationDao dao;
   const ReservationListPage({
     super.key,
@@ -51,19 +57,30 @@ class ReservationListPage extends StatefulWidget {
   State<ReservationListPage> createState() => _ReservationListPageState();
 }
 
+/// The state and logic for the [ReservationListPage].
 class _ReservationListPageState extends State<ReservationListPage> {
+  /// The Data Access Object for reservations.
   late ReservationDao dao;
+  /// The list of current reservations.
   List<Reservation> reservations = [];
+  /// The list of available flights for the dropdown.
   List<Flight> availableFlights = [];
 
+  /// Controller for the customer name text field.
   final customerController = TextEditingController();
+  /// Controller for the date text field.
   final dateController = TextEditingController();
+  /// Controller for the comment text field.
   final commentController = TextEditingController();
+  /// Instance for handling encrypted shared preferences.
   final EncryptedSharedPreferences _prefs = EncryptedSharedPreferences();
 
+  /// The currently selected flight in the dropdown.
   Flight? selectedFlight;
+  /// The currently selected reservation to view details.
   Reservation? selectedReservation;
 
+  /// Formats an integer to a two-digit string.
   String _twoDigits(int n) => n.toString().padLeft(2, '0');
 
   @override
@@ -75,6 +92,7 @@ class _ReservationListPageState extends State<ReservationListPage> {
     _loadFlights();
   }
 
+  /// Loads available flights from the database for the dropdown.
   void _loadFlights() async {
     final db = await $FloorFlightDatabase
         .databaseBuilder('flights.db')
@@ -86,6 +104,7 @@ class _ReservationListPageState extends State<ReservationListPage> {
     });
   }
 
+  /// Loads existing reservations from the database.
   void _loadReservations() async {
     final items = await dao.getAllReservations();
     setState(() {
@@ -97,12 +116,14 @@ class _ReservationListPageState extends State<ReservationListPage> {
     });
   }
 
+  /// Loads previously saved form inputs from secure storage.
   void _loadSavedInputs() async {
     customerController.text = await _prefs.getString('customer') ?? '';
     dateController.text = await _prefs.getString('date') ?? '';
     commentController.text = await _prefs.getString('comment') ?? '';
   }
 
+  /// Clears all input fields in the form.
   void _cancelReservation() {
     customerController.clear();
     dateController.clear();
@@ -112,6 +133,7 @@ class _ReservationListPageState extends State<ReservationListPage> {
     );
   }
 
+  /// Validates input and adds a new reservation to the database.
   void _addReservation() async {
     final t = AppLocalizations.of(context)!;
     final customer = customerController.text.trim();
@@ -151,10 +173,12 @@ class _ReservationListPageState extends State<ReservationListPage> {
     );
   }
 
+  /// Navigates back to the home screen.
   void _goBackToHome() {
     Navigator.pop(context);
   }
 
+  /// Deletes the currently selected reservation from the database.
   void _deleteSelectedReservation() async {
     if (selectedReservation != null) {
       await dao.deleteReservation(selectedReservation!);
@@ -196,6 +220,7 @@ class _ReservationListPageState extends State<ReservationListPage> {
     }
   }
 
+  /// Builds the AppBar for the page.
   AppBar _buildAppBar(AppLocalizations t) {
     return AppBar(
       backgroundColor: Colors.deepPurpleAccent.shade100,
@@ -224,6 +249,7 @@ class _ReservationListPageState extends State<ReservationListPage> {
     );
   }
 
+  /// Builds the main content view with form and list.
   Widget _listViewPage(AppLocalizations t) {
     return Padding(
       padding: const EdgeInsets.all(16.0),
@@ -288,6 +314,7 @@ class _ReservationListPageState extends State<ReservationListPage> {
     );
   }
 
+  /// Builds a styled text field.
   Widget _buildTextField(String label, TextEditingController controller) {
     return SizedBox(
       width: 400,
@@ -298,6 +325,7 @@ class _ReservationListPageState extends State<ReservationListPage> {
     );
   }
 
+  /// Builds a read-only text field that opens a date picker on tap.
   Widget _buildDatePicker(AppLocalizations t) {
     return SizedBox(
       width: 400,
@@ -323,6 +351,7 @@ class _ReservationListPageState extends State<ReservationListPage> {
     );
   }
 
+  /// Builds a multi-line text field for comments.
   Widget _buildCommentBox(AppLocalizations t) {
     return SizedBox(
       width: 400,
@@ -340,6 +369,7 @@ class _ReservationListPageState extends State<ReservationListPage> {
     );
   }
 
+  /// Builds the row of action buttons.
   Widget _buildButtons(AppLocalizations t) {
     return Row(
       children: [
@@ -360,6 +390,7 @@ class _ReservationListPageState extends State<ReservationListPage> {
     );
   }
 
+  /// Builds the details view for a selected reservation.
   Widget _detailsPage(BuildContext context, AppLocalizations t) {
     if (selectedReservation == null) {
       return Center(child: Text(t.translate('Check your Reservation'), style: const TextStyle(fontSize: 20)));

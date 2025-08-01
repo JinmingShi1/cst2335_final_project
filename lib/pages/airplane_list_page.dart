@@ -6,6 +6,7 @@ import '../Entities/airplane_entity.dart';
 import '../localization/AppLocalizations.dart';
 import 'airplane_detail_page.dart';
 
+/// A page that displays a list of airplanes and allows adding, updating, and deleting them.
 class AirplaneListPage extends StatefulWidget {
   const AirplaneListPage({super.key});
 
@@ -13,18 +14,19 @@ class AirplaneListPage extends StatefulWidget {
   State<AirplaneListPage> createState() => _AirplaneListPageState();
 }
 
+/// State for the [AirplaneListPage].
 class _AirplaneListPageState extends State<AirplaneListPage> {
   late AppLocalizations t;
   late AirplaneDao dao;
   List<Airplane> airplanes = [];
 
-  // For the "Add" form
+  /// Controllers for the "Add Airplane" form.
   final _addFormTypeController = TextEditingController();
   final _addFormCapacityController = TextEditingController();
   final _addFormSpeedController = TextEditingController();
   final _addFormRangeController = TextEditingController();
 
-  // For the tablet's detail view form
+  /// Controllers and key for the tablet detail view form.
   final _detailFormKey = GlobalKey<FormState>();
   final _detailFormTypeController = TextEditingController();
   final _detailFormCapacityController = TextEditingController();
@@ -32,6 +34,7 @@ class _AirplaneListPageState extends State<AirplaneListPage> {
   final _detailFormRangeController = TextEditingController();
 
   final _secureStorage = const FlutterSecureStorage();
+  /// The currently selected airplane in the tablet layout.
   Airplane? _selectedAirplane;
 
   @override
@@ -39,7 +42,6 @@ class _AirplaneListPageState extends State<AirplaneListPage> {
     super.initState();
     _initDB();
 
-    // Listeners for the "Add" form to save input
     _addFormTypeController.addListener(_saveInput);
     _addFormCapacityController.addListener(_saveInput);
     _addFormSpeedController.addListener(_saveInput);
@@ -66,6 +68,7 @@ class _AirplaneListPageState extends State<AirplaneListPage> {
     t = AppLocalizations.of(context)!;
   }
 
+  /// Initializes the database connection and loads initial data.
   Future<void> _initDB() async {
     final db = await $FloorAirplaneDatabase.databaseBuilder('airplanes.db').build();
     dao = db.airplaneDao;
@@ -93,6 +96,7 @@ class _AirplaneListPageState extends State<AirplaneListPage> {
     _loadAirplanes();
   }
 
+  /// Saves the current "add" form input to secure storage.
   Future<void> _saveInput() async {
     await _secureStorage.write(key: 'last_type', value: _addFormTypeController.text);
     await _secureStorage.write(key: 'last_capacity', value: _addFormCapacityController.text);
@@ -100,6 +104,7 @@ class _AirplaneListPageState extends State<AirplaneListPage> {
     await _secureStorage.write(key: 'last_range', value: _addFormRangeController.text);
   }
 
+  /// Loads previously saved form input from secure storage.
   Future<void> _loadSavedInput() async {
     _addFormTypeController.text = await _secureStorage.read(key: 'last_type') ?? '';
     _addFormCapacityController.text = await _secureStorage.read(key: 'last_capacity') ?? '';
@@ -107,10 +112,12 @@ class _AirplaneListPageState extends State<AirplaneListPage> {
     _addFormRangeController.text = await _secureStorage.read(key: 'last_range') ?? '';
   }
 
+  /// Clears all saved form input from secure storage.
   Future<void> _clearSavedInput() async {
     await _secureStorage.deleteAll();
   }
 
+  /// Fetches all airplanes from the database and updates the UI.
   Future<void> _loadAirplanes() async {
     final list = await dao.findAllAirplanes();
     setState(() {
@@ -118,6 +125,7 @@ class _AirplaneListPageState extends State<AirplaneListPage> {
     });
   }
 
+  /// Validates form input and adds a new airplane to the database.
   Future<void> _addAirplane() async {
     if (_addFormTypeController.text.isEmpty ||
         _addFormCapacityController.text.isEmpty ||
@@ -141,6 +149,7 @@ class _AirplaneListPageState extends State<AirplaneListPage> {
     _showSnackBar(t.translate("airplaneListAirplaneAdded"));
   }
 
+  /// Clears the text fields in the "add" form.
   void _clearAddForm() {
     _addFormTypeController.clear();
     _addFormCapacityController.clear();
@@ -148,11 +157,12 @@ class _AirplaneListPageState extends State<AirplaneListPage> {
     _addFormRangeController.clear();
   }
 
+  /// Displays a SnackBar with a given message.
   void _showSnackBar(String msg) {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
   }
 
-  // Phone Navigation
+  /// Navigates to the detail page for a given airplane (for phones).
   Future<void> _navigateToDetail(Airplane airplane) async {
     final result = await Navigator.push(
       context,
@@ -166,7 +176,7 @@ class _AirplaneListPageState extends State<AirplaneListPage> {
     }
   }
 
-  // Tablet Detail View
+  /// Selects an airplane to show its details in the tablet layout.
   void _selectAirplaneForTablet(Airplane airplane) {
     setState(() {
       _selectedAirplane = airplane;
@@ -178,6 +188,7 @@ class _AirplaneListPageState extends State<AirplaneListPage> {
     });
   }
 
+  /// Updates the selected airplane's details from the tablet view.
   Future<void> _updateAirplaneFromTablet() async {
     if (_selectedAirplane == null) return;
 
@@ -191,7 +202,6 @@ class _AirplaneListPageState extends State<AirplaneListPage> {
       );
       await dao.updateAirplane(updatedAirplane);
       _showSnackBar(t.translate("airplaneListAirplaneUpdated"));
-      // Refresh list and clear selection
       _loadAirplanes();
       setState(() {
         _selectedAirplane = null;
@@ -199,6 +209,7 @@ class _AirplaneListPageState extends State<AirplaneListPage> {
     }
   }
 
+  /// Deletes the selected airplane from the tablet view.
   Future<void> _deleteAirplaneFromTablet() async {
     if (_selectedAirplane == null) return;
 
@@ -219,7 +230,6 @@ class _AirplaneListPageState extends State<AirplaneListPage> {
           IconButton(
             icon: const Icon(Icons.help_outline),
             onPressed: () {
-              // instruction dialog
               showDialog(
                 context: context,
                 builder: (context) => AlertDialog(
@@ -239,7 +249,6 @@ class _AirplaneListPageState extends State<AirplaneListPage> {
       ),
       body: LayoutBuilder(
         builder: (context, constraints) {
-          // Use different layout for phone and tablet
           if (constraints.maxWidth > 720) {
             return _buildTabletLayout();
           } else {
@@ -250,6 +259,7 @@ class _AirplaneListPageState extends State<AirplaneListPage> {
     );
   }
 
+  /// Builds the UI layout for phone-sized screens.
   Widget _buildPhoneLayout() {
     return Column(
       children: [
@@ -262,6 +272,7 @@ class _AirplaneListPageState extends State<AirplaneListPage> {
     );
   }
 
+  /// Builds the UI layout for tablet-sized screens.
   Widget _buildTabletLayout() {
     return Row(
       children: [
@@ -278,7 +289,6 @@ class _AirplaneListPageState extends State<AirplaneListPage> {
           ),
         ),
         const VerticalDivider(),
-        // Right side: Detail view
         Expanded(
           flex: 3,
           child: _selectedAirplane == null
@@ -289,6 +299,7 @@ class _AirplaneListPageState extends State<AirplaneListPage> {
     );
   }
 
+  /// Builds the form for adding a new airplane.
   Widget _buildAddAirplaneForm() {
     return Padding(
       padding: const EdgeInsets.all(16.0),
@@ -317,6 +328,7 @@ class _AirplaneListPageState extends State<AirplaneListPage> {
     );
   }
 
+  /// Builds the list view that displays all airplanes.
   Widget _buildAirplaneList(void Function(Airplane) onTap) {
     return Expanded(
       child: ListView.builder(
@@ -335,6 +347,7 @@ class _AirplaneListPageState extends State<AirplaneListPage> {
     );
   }
 
+  /// Builds the detail view for the tablet layout.
   Widget _buildTabletDetailView() {
     return Padding(
       padding: const EdgeInsets.all(16.0),
@@ -368,7 +381,7 @@ class _AirplaneListPageState extends State<AirplaneListPage> {
               keyboardType: TextInputType.number,
               validator: (value) => value!.isEmpty ? "${t.translate("airplaneListPleaseEnter")} ${t.translate("Range")}" : null,
             ),
-            const Spacer(), // Pushes buttons to the bottom
+            const Spacer(),
             Row(
               children: [
                 Expanded(
