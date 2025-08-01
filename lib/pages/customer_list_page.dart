@@ -15,45 +15,22 @@ class CustomerListPage extends StatefulWidget {
 
 class _CustomerListPageState extends State<CustomerListPage> {
   late AppLocalizations t;
-  late CustomerDao dao;
-  List<Customer> customers = [];
-
-  final _addFirstNameCtrl = TextEditingController();
-  final _addLastNameCtrl = TextEditingController();
-  final _addAddressCtrl = TextEditingController();
-  final _addDobCtrl = TextEditingController();
-
-  final _detailFormKey = GlobalKey<FormState>();
-  final _detailFirstNameCtrl = TextEditingController();
-  final _detailLastNameCtrl = TextEditingController();
-  final _detailAddressCtrl = TextEditingController();
-  final _detailDobCtrl = TextEditingController();
-
-  final _secureStorage = const FlutterSecureStorage();
+  late CustomerDao _dao;
+  List<Customer> _customers = [];
   Customer? _selectedCustomer;
+  final _storage = const FlutterSecureStorage();
 
   @override
   void initState() {
     super.initState();
-    _initDB();
-
-    _addFirstNameCtrl.addListener(_saveInput);
-    _addLastNameCtrl.addListener(_saveInput);
-    _addAddressCtrl.addListener(_saveInput);
-    _addDobCtrl.addListener(_saveInput);
+    _connectToDatabase();
   }
 
-  @override
-  void dispose() {
-    _addFirstNameCtrl.dispose();
-    _addLastNameCtrl.dispose();
-    _addAddressCtrl.dispose();
-    _addDobCtrl.dispose();
-    _detailFirstNameCtrl.dispose();
-    _detailLastNameCtrl.dispose();
-    _detailAddressCtrl.dispose();
-    _detailDobCtrl.dispose();
-    super.dispose();
+  Future<void> _connectToDatabase() async {
+    final db = await $FloorCustomerDatabase.databaseBuilder('customer_database.db').build();
+    _dao = db.customerDao;
+    _refreshCustomerList();
+    _promptForSavedData();
   }
 
   @override
@@ -62,178 +39,163 @@ class _CustomerListPageState extends State<CustomerListPage> {
     t = AppLocalizations.of(context)!;
   }
 
-  Future<void> _initDB() async {
-    final db = await $FloorCustomerDatabase.databaseBuilder('customer_database.db').build();
-    dao = db.customerDao;
+  Future<void> _refreshCustomerList() async {
+    final customerList = await _dao.findAllCustomers();
+    setState(() {
+      _customers = customerList;
+    });
+  }
 
-    Future.delayed(Duration.zero, () async {
+  void _showInstructionDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(t.translate("customerListHowToUse")),
+        content: Text(t.translate("customerListHowToUseContent")),
+        actions: [TextButton(child: Text(t.translate("OK")), onPressed: () => Navigator.of(context).pop())],
+      ),
+    );
+  }
+
+  Future<void> _promptForSavedData() async {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
       final useLast = await showDialog<bool>(
         context: context,
-        builder: (_) => AlertDialog(
+        builder: (ctx) => AlertDialog(
           title: Text(t.translate("customerListUsePreviousData")),
           content: Text(t.translate("customerListReuseLastInput")),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(context, false), child: Text(t.translate("No"))),
-            TextButton(onPressed: () => Navigator.pop(context, true), child: Text(t.translate("Yes"))),
+            TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(t.translate("No"))),
+            TextButton(onPressed: () => Navigator.pop(ctx, true), child: Text(t.translate("Yes"))),
           ],
         ),
       );
 
       if (useLast == true) {
-        await _loadSavedInput();
-      } else {
-        await _clearSavedInput();
+        _showAddCustomerSheet(loadPrevious: true);
       }
     });
-
-    _loadCustomers();
   }
 
-  Future<void> _saveInput() async {
-    await _secureStorage.write(key: 'last_firstName', value: _addFirstNameCtrl.text);
-    await _secureStorage.write(key: 'last_lastName', value: _addLastNameCtrl.text);
-    await _secureStorage.write(key: 'last_address', value: _addAddressCtrl.text);
-    await _secureStorage.write(key: 'last_dob', value: _addDobCtrl.text);
-  }
+  void _showAddCustomerSheet({bool loadPrevious = false}) {
+    final firstNameCtrl = TextEditingController();
+    final lastNameCtrl = TextEditingController();
+    final addressCtrl = TextEditingController();
+    final dobCtrl = TextEditingController();
 
-  Future<void> _loadSavedInput() async {
-    _addFirstNameCtrl.text = await _secureStorage.read(key: 'last_firstName') ?? '';
-    _addLastNameCtrl.text = await _secureStorage.read(key: 'last_lastName') ?? '';
-    _addAddressCtrl.text = await _secureStorage.read(key: 'last_address') ?? '';
-    _addDobCtrl.text = await _secureStorage.read(key: 'last_dob') ?? '';
-  }
-
-  Future<void> _clearSavedInput() async {
-    await _secureStorage.deleteAll();
-  }
-
-  Future<void> _loadCustomers() async {
-    final list = await dao.findAllCustomers();
-    setState(() {
-      customers = list;
-    });
-  }
-
-  Future<void> _addCustomer() async {
-    if (_addFirstNameCtrl.text.isEmpty ||
-        _addLastNameCtrl.text.isEmpty ||
-        _addAddressCtrl.text.isEmpty ||
-        _addDobCtrl.text.isEmpty) {
-      _showSnackBar(t.translate("customerListFormNotice"));
-      return;
+    if (loadPrevious) {
+      _storage.read(key: 'last_firstName').then((v) => firstNameCtrl.text = v ?? '');
+      _storage.read(key: 'last_lastName').then((v) => lastNameCtrl.text = v ?? '');
+      _storage.read(key: 'last_address').then((v) => addressCtrl.text = v ?? '');
+      _storage.read(key: 'last_dob').then((v) => dobCtrl.text = v ?? '');
     }
 
-    final customer = Customer(
-      firstName: _addFirstNameCtrl.text,
-      lastName: _addLastNameCtrl.text,
-      address: _addAddressCtrl.text,
-      dateOfBirth: DateTime.tryParse(_addDobCtrl.text)?.millisecondsSinceEpoch ?? 0,
-    );
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (ctx) => Padding(
+        padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom, top: 20, left: 20, right: 20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(t.translate("customerListAddCustomer"), style: Theme.of(context).textTheme.headlineSmall),
+            const SizedBox(height: 20),
+            TextField(controller: firstNameCtrl, decoration: InputDecoration(labelText: t.translate("customerListFirstName"))),
+            TextField(controller: lastNameCtrl, decoration: InputDecoration(labelText: t.translate("customerListLastName"))),
+            TextField(controller: addressCtrl, decoration: InputDecoration(labelText: t.translate("customerListAddress"))),
+            TextField(
+                controller: dobCtrl,
+                decoration: InputDecoration(
+                    labelText: t.translate("customerListDob"),
+                    hintText: "YYYY-MM-DD",
+                    suffixIcon: IconButton(
+                        icon: const Icon(Icons.calendar_today),
+                        onPressed: () async {
+                          DateTime? picked = await showDatePicker(context: context, initialDate: DateTime.now(), firstDate: DateTime(1900), lastDate: DateTime.now());
+                          if(picked != null) dobCtrl.text = picked.toIso8601String().substring(0, 10);
+                        }
+                    )
+                )
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.teal, foregroundColor: Colors.white, minimumSize: const Size.fromHeight(50)),
+              child: Text(t.translate("customerListAddCustomer")),
+              onPressed: () async {
+                if(firstNameCtrl.text.isEmpty || lastNameCtrl.text.isEmpty || addressCtrl.text.isEmpty || dobCtrl.text.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(t.translate("customerListFormNotice"))));
+                  return;
+                }
+                final newCustomer = Customer(
+                  firstName: firstNameCtrl.text,
+                  lastName: lastNameCtrl.text,
+                  address: addressCtrl.text,
+                  dateOfBirth: DateTime.parse(dobCtrl.text).millisecondsSinceEpoch,
+                );
+                await _dao.insertCustomer(newCustomer);
 
-    await dao.insertCustomer(customer);
-    _clearAddForm();
-    await _clearSavedInput();
-    _loadCustomers();
-    _showSnackBar(t.translate("customerListCustomerAdded"));
-  }
+                await _storage.write(key: 'last_firstName', value: firstNameCtrl.text);
+                await _storage.write(key: 'last_lastName', value: lastNameCtrl.text);
+                await _storage.write(key: 'last_address', value: addressCtrl.text);
+                await _storage.write(key: 'last_dob', value: dobCtrl.text);
 
-  void _clearAddForm() {
-    _addFirstNameCtrl.clear();
-    _addLastNameCtrl.clear();
-    _addAddressCtrl.clear();
-    _addDobCtrl.clear();
-  }
-
-  void _showSnackBar(String msg) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
-  }
-
-  Future<void> _navigateToDetail(Customer customer) async {
-    final result = await Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => CustomerDetailPage(customer: customer, dao: dao),
+                Navigator.pop(ctx);
+                _refreshCustomerList();
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(t.translate("customerListCustomerAdded"))));
+              },
+            ),
+            const SizedBox(height: 20),
+          ],
+        ),
       ),
     );
+  }
+
+  void _handleCustomerTapForPhone(Customer customer) async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => CustomerDetailPage(customer: customer, dao: _dao)),
+    );
     if (result == true) {
-      _loadCustomers();
+      _refreshCustomerList();
     }
   }
 
-  void _selectCustomerForTablet(Customer customer) {
+  void _handleCustomerTapForTablet(Customer customer) {
     setState(() {
       _selectedCustomer = customer;
-      _detailFirstNameCtrl.text = customer.firstName;
-      _detailLastNameCtrl.text = customer.lastName;
-      _detailAddressCtrl.text = customer.address;
-      _detailDobCtrl.text = DateTime.fromMillisecondsSinceEpoch(customer.dateOfBirth).toIso8601String().substring(0, 10);
     });
-  }
-
-  Future<void> _updateCustomerFromTablet() async {
-    if (_selectedCustomer == null) return;
-
-    if (_detailFormKey.currentState!.validate()) {
-      final updatedCustomer = Customer(
-        id: _selectedCustomer!.id,
-        firstName: _detailFirstNameCtrl.text,
-        lastName: _detailLastNameCtrl.text,
-        address: _detailAddressCtrl.text,
-        dateOfBirth: DateTime.tryParse(_detailDobCtrl.text)?.millisecondsSinceEpoch ?? _selectedCustomer!.dateOfBirth,
-      );
-      await dao.updateCustomer(updatedCustomer);
-      _showSnackBar(t.translate("customerListCustomerUpdated"));
-      _loadCustomers();
-      setState(() => _selectedCustomer = null);
-    }
-  }
-
-  Future<void> _deleteCustomerFromTablet() async {
-    if (_selectedCustomer == null) return;
-    await dao.deleteCustomer(_selectedCustomer!);
-    _showSnackBar(t.translate("customerListCustomerDeleted"));
-    _loadCustomers();
-    setState(() => _selectedCustomer = null);
   }
 
   @override
   Widget build(BuildContext context) {
+    final isTablet = MediaQuery.of(context).size.width > 720;
+
     return Scaffold(
       appBar: AppBar(
         title: Text(t.translate("customerListTitle")),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.help_outline),
-            onPressed: () {
-              showDialog(
-                context: context,
-                builder: (context) => AlertDialog(
-                  title: Text(t.translate("customerListHowToUse")),
-                  content: Text(t.translate("customerListHowToUseContent")),
-                  actions: [TextButton(child: Text(t.translate("OK")), onPressed: () => Navigator.of(context).pop())],
-                ),
-              );
-            },
-          ),
-        ],
+        backgroundColor: Colors.teal,
+        actions: [IconButton(icon: const Icon(Icons.help_outline), onPressed: _showInstructionDialog)],
       ),
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          if (constraints.maxWidth > 720) {
-            return _buildTabletLayout();
-          } else {
-            return _buildPhoneLayout();
-          }
-        },
+      body: isTablet ? _buildTabletLayout() : _buildPhoneLayout(),
+      floatingActionButton: isTablet ? null : FloatingActionButton(
+        onPressed: () => _showAddCustomerSheet(),
+        backgroundColor: Colors.teal,
+        child: const Icon(Icons.add),
       ),
     );
   }
 
   Widget _buildPhoneLayout() {
-    return SingleChildScrollView(
-      child: Column(
-        children: [_buildAddCustomerForm(), const Divider(), _buildCustomerList(_navigateToDetail)],
-      ),
+    return _customers.isEmpty
+        ? Center(child: Text(t.translate("customerListNoCustomers")))
+        : ListView.builder(
+      padding: const EdgeInsets.all(8),
+      itemCount: _customers.length,
+      itemBuilder: (context, index) {
+        final customer = _customers[index];
+        return _buildCustomerCard(customer, () => _handleCustomerTapForPhone(customer));
+      },
     );
   }
 
@@ -241,112 +203,61 @@ class _CustomerListPageState extends State<CustomerListPage> {
     return Row(
       children: [
         SizedBox(
-          width: 450,
+          width: 400,
           child: Column(
             children: [
-              _buildAddCustomerForm(),
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: ElevatedButton.icon(
+                  icon: const Icon(Icons.add),
+                  label: Text(t.translate("customerListAddCustomer")),
+                  style: ElevatedButton.styleFrom(minimumSize: const Size.fromHeight(50)),
+                  onPressed: () => _showAddCustomerSheet(),
+                ),
+              ),
               const Divider(),
-              _buildCustomerList(_selectCustomerForTablet),
+              Expanded(
+                child: _customers.isEmpty
+                    ? Center(child: Text(t.translate("customerListNoCustomers")))
+                    : ListView.builder(
+                  padding: const EdgeInsets.all(8),
+                  itemCount: _customers.length,
+                  itemBuilder: (context, index) {
+                    final customer = _customers[index];
+                    return _buildCustomerCard(customer, () => _handleCustomerTapForTablet(customer));
+                  },
+                ),
+              ),
             ],
           ),
         ),
-        const VerticalDivider(),
+        const VerticalDivider(width: 1),
         Expanded(
           child: _selectedCustomer == null
               ? Center(child: Text(t.translate("customerListSelectToSeeDetails")))
-              : _buildTabletDetailView(),
+              : CustomerDetailPage(
+            key: ValueKey(_selectedCustomer!.id), // Important for state reset
+            customer: _selectedCustomer!,
+            dao: _dao,
+          ),
         ),
       ],
     );
   }
 
-  Widget _buildAddCustomerForm() {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(t.translate("customerListAddCustomer"), style: Theme.of(context).textTheme.titleLarge),
-          const SizedBox(height: 8),
-          TextField(controller: _addFirstNameCtrl, decoration: InputDecoration(labelText: t.translate("customerListFirstName"))),
-          TextField(controller: _addLastNameCtrl, decoration: InputDecoration(labelText: t.translate("customerListLastName"))),
-          TextField(controller: _addAddressCtrl, decoration: InputDecoration(labelText: t.translate("customerListAddress"))),
-          TextField(controller: _addDobCtrl, decoration: InputDecoration(labelText: t.translate("customerListDob"), hintText: "YYYY-MM-DD")),
-          const SizedBox(height: 16),
-          ElevatedButton(
-            onPressed: _addCustomer,
-            child: Text(t.translate("customerListAddCustomer")),
-          )
-        ],
-      ),
-    );
-  }
-
-  Widget _buildCustomerList(void Function(Customer) onTap) {
-    return SizedBox(
-      height: MediaQuery.of(context).size.height * 0.5, // Constrain height
-      child: ListView.builder(
-        itemCount: customers.length,
-        itemBuilder: (context, index) {
-          final customer = customers[index];
-          return ListTile(
-            title: Text("${customer.firstName} ${customer.lastName}"),
-            subtitle: Text(customer.address),
-            trailing: const Icon(Icons.chevron_right),
-            selected: _selectedCustomer?.id == customer.id,
-            onTap: () => onTap(customer),
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _buildTabletDetailView() {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Form(
-        key: _detailFormKey,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text("${t.translate("Edit")}: ${_selectedCustomer!.firstName}", style: Theme.of(context).textTheme.titleLarge),
-            const SizedBox(height: 16),
-            TextFormField(
-              controller: _detailFirstNameCtrl,
-              decoration: InputDecoration(labelText: t.translate("customerListFirstName")),
-              validator: (v) => v!.isEmpty ? t.translate("customerListPleaseEnter") : null,
-            ),
-            TextFormField(
-              controller: _detailLastNameCtrl,
-              decoration: InputDecoration(labelText: t.translate("customerListLastName")),
-              validator: (v) => v!.isEmpty ? t.translate("customerListPleaseEnter") : null,
-            ),
-            TextFormField(
-              controller: _detailAddressCtrl,
-              decoration: InputDecoration(labelText: t.translate("customerListAddress")),
-              validator: (v) => v!.isEmpty ? t.translate("customerListPleaseEnter") : null,
-            ),
-            TextFormField(
-              controller: _detailDobCtrl,
-              decoration: InputDecoration(labelText: t.translate("customerListDob")),
-              validator: (v) => v!.isEmpty ? t.translate("customerListPleaseEnter") : null,
-            ),
-            const Spacer(),
-            Row(
-              children: [
-                Expanded(child: ElevatedButton(onPressed: _updateCustomerFromTablet, child: Text(t.translate("Update")))),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: _deleteCustomerFromTablet,
-                    style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-                    child: Text(t.translate("Delete")),
-                  ),
-                ),
-              ],
-            ),
-          ],
+  Widget _buildCustomerCard(Customer customer, VoidCallback onTap) {
+    return Card(
+      elevation: 3,
+      margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
+      child: ListTile(
+        leading: CircleAvatar(
+          backgroundColor: Colors.teal.shade100,
+          child: Text("${customer.firstName[0]}${customer.lastName[0]}", style: const TextStyle(color: Colors.teal)),
         ),
+        title: Text("${customer.firstName} ${customer.lastName}"),
+        subtitle: Text(customer.address),
+        onTap: onTap,
+        selected: _selectedCustomer?.id == customer.id,
       ),
     );
   }

@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'package:floor/floor.dart';
 import 'package:sqflite/sqflite.dart' as sqflite;
-import '../dao/flight_dao.dart'; // Make sure the path is correct
-import '../Entities/flight_entity.dart'; // Make sure the path is correct
+import '../dao/flight_dao.dart';
+import '../Entities/flight_entity.dart';
 
 part 'flight_database.g.dart';
 

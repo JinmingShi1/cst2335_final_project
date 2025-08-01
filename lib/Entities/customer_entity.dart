@@ -8,7 +8,7 @@ class Customer {
   String firstName;
   String lastName;
   String address;
-  int dateOfBirth; // Stored as millisecondsSinceEpoch
+  int dateOfBirth;
 
   Customer({
     this.id,

@@ -4,7 +4,7 @@ import '../Entities/customer_entity.dart';
 
 @dao
 abstract class CustomerDao {
-  @Query('SELECT * FROM Customer ORDER BY firstName, lastName')
+  @Query('SELECT * FROM customers ORDER BY firstName, lastName')
   Future<List<Customer>> findAllCustomers();
 
   @insert

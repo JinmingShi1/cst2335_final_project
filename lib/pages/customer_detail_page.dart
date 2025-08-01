@@ -20,30 +20,31 @@ class CustomerDetailPage extends StatefulWidget {
 class _CustomerDetailPageState extends State<CustomerDetailPage> {
   late AppLocalizations t;
   final _formKey = GlobalKey<FormState>();
-  late TextEditingController _firstNameController;
-  late TextEditingController _lastNameController;
-  late TextEditingController _addressController;
-  late TextEditingController _dobController;
+
+  late TextEditingController _firstNameCtrl;
+  late TextEditingController _lastNameCtrl;
+  late TextEditingController _addressCtrl;
+  late TextEditingController _dobCtrl;
 
   @override
   void initState() {
     super.initState();
-    _firstNameController = TextEditingController(text: widget.customer.firstName);
-    _lastNameController = TextEditingController(text: widget.customer.lastName);
-    _addressController = TextEditingController(text: widget.customer.address);
-    // Display date in a readable format
-    _dobController = TextEditingController(
-        text: DateTime.fromMillisecondsSinceEpoch(widget.customer.dateOfBirth)
-            .toIso8601String()
-            .substring(0, 10));
+    _firstNameCtrl = TextEditingController(text: widget.customer.firstName);
+    _lastNameCtrl = TextEditingController(text: widget.customer.lastName);
+    _addressCtrl = TextEditingController(text: widget.customer.address);
+    _dobCtrl = TextEditingController(text: _formatDate(widget.customer.dateOfBirth));
+  }
+
+  String _formatDate(int timestamp) {
+    return DateTime.fromMillisecondsSinceEpoch(timestamp).toIso8601String().substring(0, 10);
   }
 
   @override
   void dispose() {
-    _firstNameController.dispose();
-    _lastNameController.dispose();
-    _addressController.dispose();
-    _dobController.dispose();
+    _firstNameCtrl.dispose();
+    _lastNameCtrl.dispose();
+    _addressCtrl.dispose();
+    _dobCtrl.dispose();
     super.dispose();
   }
 
@@ -53,41 +54,54 @@ class _CustomerDetailPageState extends State<CustomerDetailPage> {
     t = AppLocalizations.of(context)!;
   }
 
-  Future<void> _updateCustomer() async {
-    if (_formKey.currentState!.validate()) {
-      final updatedCustomer = Customer(
-        id: widget.customer.id,
-        firstName: _firstNameController.text,
-        lastName: _lastNameController.text,
-        address: _addressController.text,
-        // For simplicity, we parse the date back. A real app would use a date picker.
-        dateOfBirth: DateTime.tryParse(_dobController.text)?.millisecondsSinceEpoch ?? widget.customer.dateOfBirth,
-      );
+  Future<void> _pickDate() async {
+    DateTime? pickedDate = await showDatePicker(
+        context: context,
+        initialDate: DateTime.now(),
+        firstDate: DateTime(1900),
+        lastDate: DateTime.now());
 
-      await widget.dao.updateCustomer(updatedCustomer);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(t.translate("customerListCustomerUpdated"))));
-      Navigator.pop(context, true);
+    if (pickedDate != null) {
+      setState(() {
+        _dobCtrl.text = pickedDate.toIso8601String().substring(0, 10);
+      });
     }
   }
 
-  Future<void> _confirmDelete() async {
+  Future<void> _onUpdatePressed() async {
+    if (_formKey.currentState!.validate()) {
+      final updatedCustomer = Customer(
+        id: widget.customer.id,
+        firstName: _firstNameCtrl.text,
+        lastName: _lastNameCtrl.text,
+        address: _addressCtrl.text,
+        dateOfBirth: DateTime.parse(_dobCtrl.text).millisecondsSinceEpoch,
+      );
+
+      await widget.dao.updateCustomer(updatedCustomer);
+      if(mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(t.translate("customerListCustomerUpdated"))));
+        Navigator.pop(context, true);
+      }
+    }
+  }
+
+  Future<void> _onDeletePressed() async {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
         title: Text(t.translate("Delete")),
-        content: Text(
-            "${t.translate("customerListConfirmDelete")} ${widget.customer.firstName} ${widget.customer.lastName}?"),
+        content: Text("${t.translate("customerListConfirmDelete")} ${_firstNameCtrl.text} ${_lastNameCtrl.text}?"),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(t.translate("Cancel")),
-          ),
+          TextButton(onPressed: () => Navigator.pop(context), child: Text(t.translate("Cancel"))),
           TextButton(
             onPressed: () async {
               await widget.dao.deleteCustomer(widget.customer);
-              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(t.translate("customerListCustomerDeleted"))));
-              Navigator.pop(context); // Close dialog
-              Navigator.pop(context, true); // Go back to list
+              if(mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(t.translate("customerListCustomerDeleted"))));
+                Navigator.pop(context);
+                Navigator.pop(context, true);
+              }
             },
             child: Text(t.translate("Delete"), style: const TextStyle(color: Colors.red)),
           ),
@@ -100,45 +114,59 @@ class _CustomerDetailPageState extends State<CustomerDetailPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("${t.translate("Edit")}: ${widget.customer.firstName}"),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.delete),
-            onPressed: _confirmDelete,
-          )
-        ],
+        title: Text("${t.translate("Edit")}: ${_firstNameCtrl.text}"),
+        backgroundColor: Colors.teal,
+        actions: [IconButton(icon: const Icon(Icons.delete_outline), onPressed: _onDeletePressed)],
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(20.0),
         child: Form(
           key: _formKey,
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               TextFormField(
-                controller: _firstNameController,
-                decoration: InputDecoration(labelText: t.translate("customerListFirstName")),
+                controller: _firstNameCtrl,
+                decoration: InputDecoration(labelText: t.translate("customerListFirstName"), border: const OutlineInputBorder(), prefixIcon: const Icon(Icons.person_outline)),
                 validator: (value) => value!.isEmpty ? t.translate("customerListPleaseEnter") : null,
               ),
+              const SizedBox(height: 15),
               TextFormField(
-                controller: _lastNameController,
-                decoration: InputDecoration(labelText: t.translate("customerListLastName")),
+                controller: _lastNameCtrl,
+                decoration: InputDecoration(labelText: t.translate("customerListLastName"), border: const OutlineInputBorder(), prefixIcon: const Icon(Icons.person_outline)),
                 validator: (value) => value!.isEmpty ? t.translate("customerListPleaseEnter") : null,
               ),
+              const SizedBox(height: 15),
               TextFormField(
-                controller: _addressController,
-                decoration: InputDecoration(labelText: t.translate("customerListAddress")),
+                controller: _addressCtrl,
+                decoration: InputDecoration(labelText: t.translate("customerListAddress"), border: const OutlineInputBorder(), prefixIcon: const Icon(Icons.home_outlined)),
                 validator: (value) => value!.isEmpty ? t.translate("customerListPleaseEnter") : null,
               ),
+              const SizedBox(height: 15),
               TextFormField(
-                controller: _dobController,
-                decoration: InputDecoration(labelText: t.translate("customerListDob"), hintText: "YYYY-MM-DD"),
+                controller: _dobCtrl,
+                decoration: InputDecoration(
+                    labelText: t.translate("customerListDob"),
+                    border: const OutlineInputBorder(),
+                    prefixIcon: const Icon(Icons.calendar_today_outlined),
+                    suffixIcon: IconButton(
+                      icon: const Icon(Icons.edit_calendar_outlined),
+                      onPressed: _pickDate,
+                    )
+                ),
+                readOnly: true,
                 validator: (value) => value!.isEmpty ? t.translate("customerListPleaseEnter") : null,
               ),
-              const SizedBox(height: 24),
-              ElevatedButton(
-                onPressed: _updateCustomer,
-                style: ElevatedButton.styleFrom(minimumSize: const Size.fromHeight(50)),
-                child: Text(t.translate("Update")),
+              const SizedBox(height: 30),
+              OutlinedButton.icon(
+                icon: const Icon(Icons.save_as_outlined),
+                onPressed: _onUpdatePressed,
+                style: OutlinedButton.styleFrom(
+                  minimumSize: const Size.fromHeight(50),
+                  side: const BorderSide(color: Colors.teal),
+                  foregroundColor: Colors.teal,
+                ),
+                label: Text(t.translate("Update")),
               ),
             ],
           ),
