@@ -4,6 +4,8 @@ import '../dao/ReservationDao.dart';
 import '../Entities/reservation_entity.dart';
 import '../localization/AppLocalizations.dart';
 import 'package:cst2335_final_project/main.dart';
+import '../Entities/flight_entity.dart';
+
 
 
 void showHelpDialog(BuildContext context) {
@@ -23,7 +25,7 @@ void showHelpDialog(BuildContext context) {
   );
 }
 
-class Flight {
+/*class Flight {
   final String flightNumber;
   final String departureCity;
   final String arrivalCity;
@@ -33,6 +35,7 @@ class Flight {
     required this.arrivalCity,
   });
 }
+*/
 
 class ReservationPage extends StatelessWidget {
   final ReservationDao dao;
@@ -70,9 +73,22 @@ class _ReservationListPageState extends State<ReservationListPage> {
 
   Flight? selectedFlight;
   final List<Flight> availableFlights = [
-    Flight(flightNumber: 'AC101', departureCity: 'Toronto', arrivalCity: 'Vancouver'),
-    Flight(flightNumber: 'AC202', departureCity: 'Montreal', arrivalCity: 'Calgary'),
+    Flight(
+      id: 1,
+      departureCity: 'Toronto',
+      destinationCity: 'Vancouver',
+      departureTime: '10:00',
+      arrivalTime: '13:00',
+    ),
+    Flight(
+      id: 2,
+      departureCity: 'Montreal',
+      destinationCity: 'Calgary',
+      departureTime: '09:30',
+      arrivalTime: '12:45',
+    ),
   ];
+
 
   Reservation? selectedReservation;
 
@@ -117,7 +133,9 @@ class _ReservationListPageState extends State<ReservationListPage> {
   void _addReservation() async {
     final t = AppLocalizations.of(context)!;
     final customer = customerController.text.trim();
-    final flight = selectedFlight?.flightNumber ?? '';
+    final flight = selectedFlight != null
+        ? '${selectedFlight!.departureCity} → ${selectedFlight!.destinationCity}'
+        : '';
     final date = dateController.text.trim();
     final comment = commentController.text.trim();
 
@@ -282,7 +300,8 @@ class _ReservationListPageState extends State<ReservationListPage> {
                   return DropdownMenuItem(
                     value: flight,
                     child: Text(
-                        '${flight.flightNumber} - ${flight.departureCity} → ${flight.arrivalCity}'),
+                        '${flight.departureCity} → ${flight.destinationCity} (${flight.departureTime})'
+                    ),
                   );
                 }).toList(),
                 onChanged: (Flight? value) {
