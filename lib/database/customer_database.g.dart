@@ -163,7 +163,7 @@ class _$CustomerDao extends CustomerDao {
   @override
   Future<List<Customer>> findAllCustomers() async {
     return _queryAdapter.queryList(
-        'SELECT * FROM Customer ORDER BY firstName, lastName',
+        'SELECT * FROM customers ORDER BY firstName, lastName',
         mapper: (Map<String, Object?> row) => Customer(
             id: row['id'] as int?,
             firstName: row['firstName'] as String,

@@ -1,6 +1,7 @@
+import 'package:cst2335_final_project/database/flight_database.dart';
 import 'package:flutter/material.dart';
 import 'package:encrypted_shared_preferences/encrypted_shared_preferences.dart';
-import '../dao/ReservationDao.dart';
+import '../dao/reservation_dao.dart';
 import '../Entities/reservation_entity.dart';
 import '../localization/AppLocalizations.dart';
 import 'package:cst2335_final_project/main.dart';
@@ -71,12 +72,12 @@ class _ReservationListPageState extends State<ReservationListPage> {
     dao = widget.dao;
     _loadReservations();
     _loadSavedInputs();
-    _loadFlights(); // ⬅ 加载数据库中的航班
+    _loadFlights();
   }
 
   void _loadFlights() async {
-    final db = await $FloorReservationDatabase
-        .databaseBuilder('app_database.db')
+    final db = await $FloorFlightDatabase
+        .databaseBuilder('flights.db')
         .build();
     final flights = await db.flightDao.findAllFlights();
     setState(() {

@@ -18,9 +18,11 @@ class FlightDetailPage extends StatefulWidget {
 }
 
 class _FlightDetailPageState extends State<FlightDetailPage> {
+  // 声明 AppLocalizations 和表单 GlobalKey
   late AppLocalizations t;
   final _formKey = GlobalKey<FormState>();
 
+  // 为每个字段声明 TextEditingController
   late TextEditingController departureCityCtrl;
   late TextEditingController destinationCityCtrl;
   late TextEditingController departureTimeCtrl;
@@ -29,6 +31,7 @@ class _FlightDetailPageState extends State<FlightDetailPage> {
   @override
   void initState() {
     super.initState();
+    // 用传入的 flight 数据初始化 controllers
     departureCityCtrl = TextEditingController(text: widget.flight.departureCity);
     destinationCityCtrl = TextEditingController(text: widget.flight.destinationCity);
     departureTimeCtrl = TextEditingController(text: widget.flight.departureTime);
@@ -37,6 +40,7 @@ class _FlightDetailPageState extends State<FlightDetailPage> {
 
   @override
   void dispose() {
+    // 清理 controllers 以释放资源
     departureCityCtrl.dispose();
     destinationCityCtrl.dispose();
     departureTimeCtrl.dispose();
@@ -47,9 +51,11 @@ class _FlightDetailPageState extends State<FlightDetailPage> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    // 初始化 AppLocalizations
     t = AppLocalizations.of(context)!;
   }
 
+  // 更新航班信息的处理函数
   Future<void> _handleUpdate() async {
     if (_formKey.currentState!.validate()) {
       final updatedFlight = Flight(
@@ -66,26 +72,19 @@ class _FlightDetailPageState extends State<FlightDetailPage> {
         ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(t.translate("flightListFlightUpdated")))
         );
+        // 返回 true 来通知列表页刷新
         Navigator.pop(context, true);
       }
     }
   }
 
+  // 删除航班信息的处理函数
   Future<void> _handleDelete() async {
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
         title: Text(t.translate("Delete")),
-        content: RichText(
-          text: TextSpan(
-            style: DefaultTextStyle.of(dialogContext).style,
-            children: <TextSpan>[
-              TextSpan(text: "${t.translate("flightListConfirmDelete")} "),
-              TextSpan(text: "${widget.flight.departureCity} -> ${widget.flight.destinationCity}", style: const TextStyle(fontWeight: FontWeight.bold)),
-              const TextSpan(text: "?"),
-            ],
-          ),
-        ),
+        content: Text("${t.translate("flightListConfirmDelete")} ${widget.flight.departureCity}?"),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(dialogContext),
@@ -98,8 +97,8 @@ class _FlightDetailPageState extends State<FlightDetailPage> {
                 ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(content: Text(t.translate("flightListFlightDeleted")))
                 );
-                Navigator.pop(dialogContext);
-                Navigator.pop(context, true);
+                Navigator.pop(dialogContext); // 关闭对话框
+                Navigator.pop(context, true); // 返回 true 通知列表页刷新
               }
             },
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
@@ -110,6 +109,7 @@ class _FlightDetailPageState extends State<FlightDetailPage> {
     );
   }
 
+  // 一个辅助函数来构建带样式的 TextFormField
   Widget _buildStyledTextFormField({
     required TextEditingController controller,
     required String label,
@@ -128,14 +128,13 @@ class _FlightDetailPageState extends State<FlightDetailPage> {
         ),
         validator: (value) {
           if (value == null || value.isEmpty) {
-            return '$label cannot be empty';
+            return '$label cannot be empty'; // 可以替换成国际化文本
           }
           return null;
         },
       ),
     );
   }
-
 
   @override
   Widget build(BuildContext context) {
