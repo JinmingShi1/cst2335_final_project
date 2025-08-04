@@ -17,7 +17,7 @@ import 'Entities/flight_entity.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // 初始化 ReservationDao 和 FlightDao，使用 ReservationDatabase 即可
+  // Initialize ReservationDao and FlightDao，use ReservationDatabase only
   final db = await $FloorReservationDatabase
       .databaseBuilder('app_database.db')
       .build();
