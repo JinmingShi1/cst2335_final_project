@@ -19,7 +19,7 @@ class _FlightListPageState extends State<FlightListPage> {
   @override
   void initState() {
     super.initState();
-    flightsFuture = widget.dao.findAllFlights(); // 如果你用的是 floor 的 @Query
+    flightsFuture = widget.dao.findAllFlights();
   }
 
   @override
