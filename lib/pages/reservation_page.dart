@@ -6,7 +6,9 @@ import '../Entities/reservation_entity.dart';
 import '../localization/AppLocalizations.dart';
 import 'package:cst2335_final_project/main.dart';
 import '../Entities/flight_entity.dart';
-import '../database/reservation_database.dart';
+
+import '../database/customer_database.dart';
+import '../Entities/customer_entity.dart';
 
 /// Displays a help dialog with instructions.
 void showHelpDialog(BuildContext context) {
@@ -65,9 +67,9 @@ class _ReservationListPageState extends State<ReservationListPage> {
   List<Reservation> reservations = [];
   /// The list of available flights for the dropdown.
   List<Flight> availableFlights = [];
+  /// The list of available customers for the dropdown.
+  List<Customer> availableCustomers = [];
 
-  /// Controller for the customer name text field.
-  final customerController = TextEditingController();
   /// Controller for the date text field.
   final dateController = TextEditingController();
   /// Controller for the comment text field.
@@ -77,6 +79,8 @@ class _ReservationListPageState extends State<ReservationListPage> {
 
   /// The currently selected flight in the dropdown.
   Flight? selectedFlight;
+  /// The currently selected customer in the dropdown.
+  Customer? selectedCustomer;
   /// The currently selected reservation to view details.
   Reservation? selectedReservation;
 
@@ -90,6 +94,7 @@ class _ReservationListPageState extends State<ReservationListPage> {
     _loadReservations();
     _loadSavedInputs();
     _loadFlights();
+    _loadCustomers(); // <-- 加载客户数据
   }
 
   /// Loads available flights from the database for the dropdown.
@@ -101,6 +106,18 @@ class _ReservationListPageState extends State<ReservationListPage> {
     setState(() {
       availableFlights = flights;
       selectedFlight = flights.isNotEmpty ? flights.first : null;
+    });
+  }
+
+  /// Loads available customers from the database for the dropdown.
+  void _loadCustomers() async {
+    final db = await $FloorCustomerDatabase
+        .databaseBuilder('customer_database.db')
+        .build();
+    final customers = await db.customerDao.findAllCustomers();
+    setState(() {
+      availableCustomers = customers;
+      selectedCustomer = customers.isNotEmpty ? customers.first : null;
     });
   }
 
@@ -118,14 +135,14 @@ class _ReservationListPageState extends State<ReservationListPage> {
 
   /// Loads previously saved form inputs from secure storage.
   void _loadSavedInputs() async {
-    customerController.text = await _prefs.getString('customer') ?? '';
+    // customerController is removed
     dateController.text = await _prefs.getString('date') ?? '';
     commentController.text = await _prefs.getString('comment') ?? '';
   }
 
   /// Clears all input fields in the form.
   void _cancelReservation() {
-    customerController.clear();
+    // customerController is removed
     dateController.clear();
     commentController.clear();
     ScaffoldMessenger.of(context).showSnackBar(
@@ -136,7 +153,10 @@ class _ReservationListPageState extends State<ReservationListPage> {
   /// Validates input and adds a new reservation to the database.
   void _addReservation() async {
     final t = AppLocalizations.of(context)!;
-    final customer = customerController.text.trim();
+    // Get customer name from the selected customer object
+    final customer = selectedCustomer != null
+        ? '${selectedCustomer!.firstName} ${selectedCustomer!.lastName}'
+        : '';
     final flight = selectedFlight != null
         ? '${selectedFlight!.departureCity} → ${selectedFlight!.destinationCity}'
         : '';
@@ -162,10 +182,11 @@ class _ReservationListPageState extends State<ReservationListPage> {
     _loadReservations();
 
     setState(() {
-      customerController.clear();
+      // customerController is removed
       dateController.clear();
       commentController.clear();
       selectedFlight = availableFlights.isNotEmpty ? availableFlights.first : null;
+      selectedCustomer = availableCustomers.isNotEmpty ? availableCustomers.first : null;
     });
 
     ScaffoldMessenger.of(context).showSnackBar(
@@ -257,8 +278,32 @@ class _ReservationListPageState extends State<ReservationListPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildTextField(t.translate('customer')!, customerController),
+            // --- Customer TextField is replaced with this Dropdown ---
+            SizedBox(
+              width: 400,
+              child: Text(t.translate('customer'), style: const TextStyle(fontSize: 16)),
+            ),
+            const SizedBox(height: 8),
+            SizedBox(
+              width: 400,
+              child: DropdownButton<Customer>(
+                isExpanded: true,
+                value: selectedCustomer,
+                items: availableCustomers.map((customer) {
+                  return DropdownMenuItem(
+                    value: customer,
+                    child: Text('${customer.firstName} ${customer.lastName}'),
+                  );
+                }).toList(),
+                onChanged: (Customer? value) {
+                  setState(() {
+                    selectedCustomer = value;
+                  });
+                },
+              ),
+            ),
             const SizedBox(height: 20),
+            // --- End of replacement ---
             SizedBox(
               width: 400,
               child: Text(t.translate('chooseFlight'), style: const TextStyle(fontSize: 16)),
@@ -310,17 +355,6 @@ class _ReservationListPageState extends State<ReservationListPage> {
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  /// Builds a styled text field.
-  Widget _buildTextField(String label, TextEditingController controller) {
-    return SizedBox(
-      width: 400,
-      child: TextField(
-        controller: controller,
-        decoration: InputDecoration(labelText: label),
       ),
     );
   }
